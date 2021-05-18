@@ -1,4 +1,6 @@
 import pandas as pd
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 def hist(*args, **kwargs):
@@ -71,39 +73,42 @@ def labels(xlabel, ylabel, title=""):
 
 
 print("Starting")
-nfiles = 10 # need this many so it doesn't fail due to being too few files and the later stuff is empty
-outdir = '/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-analysis/positions_random/'
-indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/teflonhole_5mm/"
-dirname6 = "s3mmp6mm"
-dirname7 = "s3mmp7mm"
-dirname8 = "s3mmp8mm"
-dirname9 = "s3mmp9mm"
-dirname10 = "s3mmp10mm"
-dirname15 = "s3mmp15mm"
-
+nfiles = 1 # fails if there are not enough events
+local = True
 
 # Create dictionary to hold run info
 print("Creating dictionaries")
-s3p6 = {"size":3, "pitch":6, "dir": dirname6, "files":[dirname6+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles)]}
-s3p7 = {"size":3, "pitch":7, "dir": dirname7, "files":[dirname7+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles)]}
-s3p8 = {"size":3, "pitch":8, "dir": dirname8, "files":[dirname8+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles)]}
-s3p9 = {"size":3, "pitch":9, "dir":dirname9, "files":[dirname9+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles)]}
-s3p10 = {"size":3, "pitch":10, "dir":dirname10, "files":[dirname10+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles)]}
-s3p15 = {"size":3, "pitch":15, "dir":dirname15, "files":[dirname15+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles)]}
-mcs = [s3p6, s3pT, s3p7, s3p8, s3p9, s3p10, s3p15]
+s3p6 = {"size":3, "pitch":6, "dir": "s3mmp6mm"}
+s3p7 = {"size":3, "pitch":7, "dir": "s3mmp7mm"}
+s3p8 = {"size":3, "pitch":8, "dir": "s3mmp8mm"}
+s3p9 = {"size":3, "pitch":9, "dir": "s3mmp9mm"}
+s3p10 = {"size":3, "pitch":10, "dir": "s3mmp9mm"}
+s3p15 = {"size":3, "pitch":15, "dir": "s3mmp15mm"}
+
+if local:
+    outdir = '/Users/taylorcontreras/Development/Research/trackingplane/'
+    indir = outdir
+    mcs = [s3p15]
+else:
+    outdir = '/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-analysis/positions_random/'
+    indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/teflonhole_5mm/"
+    mcs = [s3p6, s3p7, s3p8, s3p9, s3p10, s3p15]
+    
+for mc in mcs:
+    mc["files"] = [indir+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
 
 # Loop over the simulations and collect the sensor info by storing in the mc dict
 print("About to loop")
 for mc in mcs:
     print("Looping in mcs")
     pmt_map = pd.DataFrame()
-    sipm_map = pd.DataFram()
+    sipm_map = pd.DataFrame()
 
     for file in mc["files"]:
         print("Looping files in mc")
         # Get all sensor responses and all the sensor positions
-        sns_response = pd.read_hdf(this_dir+file_name, 'MC/sns_response')
-        sns_positions = pd.read_hdf(this_dir+file_name, 'MC/sns_positions')
+        sns_response = pd.read_hdf(file, 'MC/sns_response')
+        sns_positions = pd.read_hdf(file, 'MC/sns_positions')
 
         # Sort to get the sipm positions
         sns_pos_sorted = sns_positions.sort_values(by=['sensor_id'])
@@ -136,10 +141,15 @@ for mc in mcs:
     mc["sipm_map"] = sipm_map
 
 nbins = 500/10
-h = hist2d(sipm_map.x, sipm_map.y, (nbins, nbins), weights = sipm_map.charge)
-labels("X [mm]", "Y [mm]", "SiPMs Light Distribution \n (NEXT-100, 6mm sipms, 10mm pitch)")
-plt.savefig(this_dir+'sipm_kr_map.png')
+for mc in mcs:
+    print(mc['sipm_map'])
+    print(mc['pmt_map'])
+    h = hist2d(mc['sipm_map'].x, mc['sipm_map'].y, (nbins, nbins), weights = mc['sipm_map'].charge)
+    labels("X [mm]", "Y [mm]", "SiPMs Light Distribution \n (NEXT-100, 6mm sipms, 10mm pitch)")
+    plt.savefig(outdir+'sipm_kr_map.png')
+    plt.close()
 
-h2 = hist2d(pmt_map.x, pmt_map.y, (nbins, nbins), weights = pmt_map.charge)
-labels("X [mm]", "Y [mm]", "PMTs Light Distribution \n (NEXT-100)")
-plt.savefig(this_dir+'pmt_kr_map.png')
+    h2 = hist2d(mc['pmt_map'].x, mc['pmt_map'].y, (nbins, nbins), weights = mc['pmt_map'].charge)
+    labels("X [mm]", "Y [mm]", "PMTs Light Distribution \n (NEXT-100)")
+    plt.savefig(outdir+'pmt_kr_map.png')
+    plt.close()
