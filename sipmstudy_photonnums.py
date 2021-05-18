@@ -1,3 +1,11 @@
+"""
+Written by: Taylor Contreras, taylorcontreras@g.harvard.edu
+
+This script uses output from the NEXT simulation software NEXUS,
+and analyzes the number of photons seen by the SiPMs, ranking
+the SiPMs by the ammount of photons it sees.
+"""
+
 import pandas as pd
 import matplotlib as mpl
 mpl.use('Agg')

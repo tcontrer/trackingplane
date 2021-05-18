@@ -1,3 +1,11 @@
+"""
+Written by: Taylor Contreras, taylorcontreras@g.harvard.edu
+
+This script uses output from the NEXT simulation software NEXUS,
+and analyzes the time of events.
+"""
+
+
 import pandas as pd
 import matplotlib as mpl
 mpl.use('Agg')

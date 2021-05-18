@@ -1,3 +1,11 @@
+"""
+Written by: Taylor Contreras, taylorcontreras@g.harvard.edu
+
+This script uses output from the NEXT simulation software NEXUS,
+and analyzes the energy distribution of each simulated 
+detector configuration.
+"""
+
 import pandas as pd
 import matplotlib as mpl
 mpl.use('Agg')

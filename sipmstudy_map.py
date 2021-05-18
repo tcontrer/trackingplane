@@ -1,3 +1,10 @@
+"""
+Written by: Taylor Contreras, taylorcontreras@g.harvard.edu
+
+This script uses output from the NEXT simulation software NEXUS,
+and produces a krypton map showing the energy distribution in xy.
+"""
+
 import pandas as pd
 import matplotlib as mpl
 mpl.use('Agg')
