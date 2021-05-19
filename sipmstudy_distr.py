@@ -17,7 +17,7 @@ from scipy.stats import norm
 from ic_functions import *
 
 print("Starting")
-nfiles = 1 # will fail if too few events
+nfiles = 500 # will fail if too few events
 local = False
 
 # Create dictionary to hold run info
@@ -85,16 +85,16 @@ for mc in mcs:
     mc['all_pmts'] = all_pmts
     
 for mc in mcs:
-    plt.hist(mc['all_sipms'].charge, label='sipms')
-    plt.hist(mc['all_pmts'].charge, label='pmts')
+    plt.hist(mc['all_sipms'].charge, label='sipms', range=(0,85000), bins=100)
+    plt.hist(mc['all_pmts'].charge, label='pmts', range=(0,85000), bins=100)
     plt.xlabel("Charge per event [pes]")
     plt.title("NEXT-100, 3mm sipms, "+str(mc['pitch'])+' pitch')
     plt.legend()
-    plt.savefig(outdir+'sipm_energy_distr_'+mc['dir']+'.png')
+    plt.savefig(outdir+'energy_distr_'+mc['dir']+'.png')
     plt.close()
     
 for mc in mcs:
-    plt.hist(mc['all_sipms'].charge, label=mc['dir'])
+    plt.hist(mc['all_sipms'].charge, label=mc['dir'], range=(0,5000), bins=100)
 plt.xlabel("Charge per event in SiPMs [pes]")
 plt.title("NEXT-100, 3mm sipms")
 plt.legend()
@@ -102,7 +102,7 @@ plt.savefig(outdir+'sipm_energy_distr_comp.png')
 plt.close()
 
 for mc in mcs:
-    plt.hist(mc['all_pmts'].charge, label=mc['dir'])
+    plt.hist(mc['all_pmts'].charge, label=mc['dir'], range=(0,100000), bins=100)
 plt.xlabel("Charge per event in PMTs [pes]")
 plt.title("NEXT-100, 3mm sipms")
 plt.legend()
