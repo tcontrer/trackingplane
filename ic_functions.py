@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 from invisible_cities.core.core_functions  import shift_to_bin_centers
 from invisible_cities.core                 import fit_functions as fitf

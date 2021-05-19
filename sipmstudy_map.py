@@ -14,7 +14,7 @@ from ic_functions import *
 
 
 print("Starting")
-nfiles = 20 # fails if there are not enough events
+nfiles = 10 # fails if there are not enough events
 local = False
 
 # Create dictionary to hold run info
@@ -73,18 +73,16 @@ for mc in mcs:
         max_sipms = sipm_response[idx].sort_values('sensor_id').set_index('sensor_id')
         new_max_sipm_positions = sipm_positions.set_index('sensor_id')
         this = new_max_sipm_positions.loc[max_sipms.index.values.tolist()]
-        event_map = pd.concat([max_sipms.loc[:,'event_id'],this.loc[:,['x','y','z']]], axis=1).set_index('event_id').sort_values(by='event_id')
-
-        pmt_map.append(pd.concat([summed_charges_byevent_pmt,event_map],axis=1))
-        sipm_map.append(pd.concat([summed_charges_byevent_sipm,event_map],axis=1))
+        event_map = pd.concat([max_sipms.loc[:,'event_id'],this.loc[:,['x','y','z']]], axis=1).set_index('event_id').sort_values(by='event_id') 
+        
+        pmt_map = pmt_map.append(pd.concat([summed_charges_byevent_pmt,event_map],axis=1))
+        sipm_map = sipm_map.append(pd.concat([summed_charges_byevent_sipm,event_map],axis=1))
 
     mc["pmt_map"] = pmt_map
     mc["sipm_map"] = sipm_map
 
-nbins = 500/10
+nbins = 500//10
 for mc in mcs:
-    print(mc['sipm_map'])
-    print(mc['pmt_map'])
     h = hist2d(mc['sipm_map'].x, mc['sipm_map'].y, (nbins, nbins), weights = mc['sipm_map'].charge)
     labels("X [mm]", "Y [mm]", "SiPMs Light Distribution \n (NEXT-100, 6mm sipms, 10mm pitch)")
     plt.savefig(outdir+'sipm_kr_map.png')
