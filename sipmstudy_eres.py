@@ -91,7 +91,7 @@ for mc in mcs:
 pitches = [mc['pitch'] for mc in mcs]
 plt.plot(pitches, [mc['sipm_eres'] for mc in mcs], 'o')
 plt.xlabel('SiPM pitch [mm]')
-plt.ylabel(r'$E_{res} FWHM % at Q_{\beta \beta}$')
+plt.ylabel(r'$E_{res}$ FWHM at $Q_{\beta \beta}$')
 plt.title('SiPM Energy Resolution')
 plt.savefig(outdir+'sipm_eres.png')
 plt.close()
@@ -99,7 +99,7 @@ plt.close()
 plt.plot(pitches, [mc['pmt_eres'] for mc in mcs], 'o')
 plt.xlabel('SiPM pitch [mm]')
 plt.title('PMT Energy Resolution')
-plt.ylabel(r'$E_{res} FWHM % at $Q_{\beta \beta}$')
+plt.ylabel(r'$E_{res}$ FWHM at $Q_{\beta \beta}$')
 plt.savefig(outdir+'pmt_eres.png')
 plt.close()
 
