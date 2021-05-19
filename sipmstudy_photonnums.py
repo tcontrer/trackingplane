@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 
 print("Starting")
-nfiles = 1 # will fail if too few events
+nfiles = 10 # will fail if too few events
 local = False
 
 # Create dictionary to hold run info
@@ -63,8 +63,11 @@ for mc in mcs:
 print("Plotting")
 # Plot each i-th sipm for each mc
 for mc in mcs:
+    print('')
+    print(mc['top_sipms'][0]['charge'])
+    print(mc['top_sipms'])
     for i in range(0,10):
-        plt.hist(mc['top_sipms'][i]['charge'], bins=50, range=(0,250))
+        plt.hist(mc['top_sipms'][i]['charge'])
         plt.xlabel('charge [pes]')
         plt.title('NEXT-100, 3mmx3mm SiPMs, '+str(mc['pitch'])+' pitch, '+str(i)+' largest sipm signal per event')
         plt.savefig(outdir+mc['dir']+"_"+str(i)+"largest_sipm.png")
@@ -73,7 +76,7 @@ for mc in mcs:
 # Plot top 5 sipms for each mc
 for mc in mcs:
     for i in range(0,5):
-        plt.hist(mc['top_sipms'][i]['charge'], alpha=0.5, bins=50, range=(0,250), label=str(i))
+        plt.hist(mc['top_sipms'][i]['charge'], alpha=0.5, label=str(i))
     plt.xlabel('charge [pes]')
     plt.title('NEXT-100, 3mmx3mm SiPMs, '+str(mc['pitch'])+' pitch')
     plt.legend()
@@ -83,7 +86,7 @@ for mc in mcs:
 # Plot top i-th sipm across mcs
 for i in range(0,10):
     for mc in mcs:
-        plt.hist(mc['top_sipms'][i]['charge'], alpha=0.5, bins=50, range=(0,250), label=str(mc['size'])+" sipms, "+str(mc['pitch'])+" pitch")
+        plt.hist(mc['top_sipms'][i]['charge'], alpha=0.5, label=str(mc['size'])+" sipms, "+str(mc['pitch'])+" pitch")
     plt.xlabel('charge [pes]')
     plt.title('NEXT-100, 3mmx3mm SiPMs, '+str(i)+" largest sipm signal per event")
     plt.legend()

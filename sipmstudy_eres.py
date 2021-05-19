@@ -17,7 +17,7 @@ from scipy.stats import norm
 from ic_functions import *
 
 print("Starting")
-nfiles = 1 # will fail if too few events
+nfiles = 999 # will fail if too few events
 local = False
 
 # Create dictionary to hold run info
