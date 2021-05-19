@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 print("Starting")
 nfiles = 1
-local = True
+local = False
 
 # Create dictionary to hold run info
 print("Creating dictionaries")
@@ -29,9 +29,9 @@ if local:
     indir = outdir
     mcs = [s3p15]
 else:
-    outdir = '/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-analysis/positions_random/'
+    outdir = '/n/holystore01/LABS/guenette_lab/Users/tcontreras/trackingplane/plots/'
     indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/teflonhole_5mm/"
-    mcs = [s3p6, s3p7, s3p8, s3p9, s3p10, s3p15]
+    mcs = [s3p6] #, s3p7, s3p8, s3p9, s3p10, s3p15]
     
 for mc in mcs:
     mc["files"] = [indir+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
