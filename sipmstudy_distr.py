@@ -22,6 +22,7 @@ local = False
 
 # Create dictionary to hold run info
 print("Creating dictionaries")
+s3p3 = {"size":3, "pitch":3, "dir":"fullcoverage"}
 s3p6 = {"size":3, "pitch":6, "dir": "s3mmp6mm"}
 s3p7 = {"size":3, "pitch":7, "dir": "s3mmp7mm"}
 s3p8 = {"size":3, "pitch":8, "dir": "s3mmp8mm"}
@@ -35,11 +36,14 @@ if local:
     mcs = [s3p15]
 else:
     outdir = '/n/holystore01/LABS/guenette_lab/Users/tcontreras/trackingplane/plots/'
-    indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/teflonhole_5mm/"
-    mcs = [s3p6] #, s3p7, s3p8, s3p9, s3p10, s3p15]
+    indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
+    mcs = [s3p3, s3p7, s3p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]
     
 for mc in mcs:
-    mc["files"] = [indir+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+    if mc['dir'] == "fullcoverage":
+        mc["files"] = [indir+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+    else:
+        mc["files"] = [indir+'teflonhole_5mm/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
     
     
 for mc in mcs:
