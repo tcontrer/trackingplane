@@ -13,11 +13,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import norm
+from fit_functions import fit_energy, plot_fit_energy, print_fit_energy, get_fit_params
 
 from ic_functions import *
 
 print("Starting")
-nfiles = 99 # will fail if too few events
+nfiles = 5 # will fail if too few events
 local = False
 event_type = 'kr'
 
@@ -77,8 +78,18 @@ for mc in mcs:
     mc['pmts'] = pmts
     
 for mc in mcs:
-    mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'] = EnergyRes(mc['sipms'].charge)
-    mc['pmt_eres'], mc['pmt_fwhm'], mc['pmt_mean'] = EnergyRes(mc['pmts'].charge)
+    sipm_fit = fit_energy(mc['sipms'].charge, 100, (np.min(mc['sipms'].charge), np.max(mc['sipms'].charge)))
+    mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'] = get_fit_params(sipm_fit)
+    print_fit_energy(sipm_fit)
+    plot_fit_energy(sipm_fit)
+    plt.savefig('sipm_eres_fit.png')
+
+    pmt_fit = fit_energy(mc['pmts'].charge, 100, (np.min(mc['pmts'].charge), np.max(mc['pmts'].charge)))
+    mc['pmt_eres'], mc['pmt_fwhm'], mc['pmt_mean'] = get_fit_params(pmt_fit)
+    print_fit_energy(pmt_fit)
+    plot_fit_energy(pmt_fit)
+    plt.savefig('pmt_eres_fit.png')
+
    
 if event_type == 'kr':
     event_str = '41.5 keV'
