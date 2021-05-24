@@ -16,7 +16,7 @@ from ic_functions import *
 print("Starting")
 nfiles = 10 # fails if there are not enough events
 local = False
-event_str = 'kr'
+event_type = 'kr'
 
 # Create dictionary to hold run info
 print("Creating dictionaries")
@@ -33,10 +33,10 @@ if local:
     indir = outdir
     mcs = [s3p15]
 else:
-    if event_str == 'kr'
+    if event_type == 'kr':
         outdir = '/n/holystore01/LABS/guenette_lab/Users/tcontreras/trackingplane/plots/krypton/'
         indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/" 
-        extra_dir = 's3mmp3mm'
+        extra_dir = '/s3mmp3mm'
     else:
         outdir = '/n/holystore01/LABS/guenette_lab/Users/tcontreras/trackingplane/plots/'
         indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
