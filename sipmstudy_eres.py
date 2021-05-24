@@ -36,12 +36,12 @@ if local:
     mcs = [s3p15]
 else:
     outdir = '/n/holystore01/LABS/guenette_lab/Users/tcontreras/trackingplane/plots/'
-    indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
-    mcs = [s3p3, s3p7, s3p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                                                       
+    indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/" #/highenergy/"
+    mcs = [s3p3, s3p6] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                                                       
 
 for mc in mcs:
     if mc['dir'] == "fullcoverage":
-        mc["files"] = [indir+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+        mc["files"] = [indir+mc['dir']+"/s3mmp3mm/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
     else:
         mc["files"] = [indir+'teflonhole_5mm/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
     
