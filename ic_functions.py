@@ -75,7 +75,7 @@ def labels(xlabel, ylabel, title=""):
 def EnergyRes(x):
     mu = np.mean(x)
     sigma = np.std(x)
-    fwhm = 2.355*sigma/mu
+    fwhm = 2.355*sigma
     e_event = 41 # keV
-    eres = fwhm*e_event
-    return eres, fwhm, mu
+    eres = fwhm/mu
+    return eres/100., fwhm, mu
