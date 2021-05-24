@@ -82,14 +82,15 @@ for mc in mcs:
     mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'] = get_fit_params(sipm_fit)
     print_fit_energy(sipm_fit)
     plot_fit_energy(sipm_fit)
-    plt.savefig('sipm_eres_fit.png')
+    plt.savefig(outdir+mc['dir']+'_sipm_eres_fit.png')
+    plt.close()
 
     pmt_fit = fit_energy(mc['pmts'].charge, 100, (np.min(mc['pmts'].charge), np.max(mc['pmts'].charge)))
     mc['pmt_eres'], mc['pmt_fwhm'], mc['pmt_mean'] = get_fit_params(pmt_fit)
     print_fit_energy(pmt_fit)
     plot_fit_energy(pmt_fit)
-    plt.savefig('pmt_eres_fit.png')
-
+    plt.savefig(outdir+mc['dir']+'_pmt_eres_fit.png')
+    plt.close()
    
 if event_type == 'kr':
     event_str = '41.5 keV'
