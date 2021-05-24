@@ -17,7 +17,7 @@ from scipy.stats import norm
 from ic_functions import *
 
 print("Starting")
-nfiles = 500 # will fail if too few events
+nfiles = 20 # will fail if too few events
 local = False
 
 # Create dictionary to hold run info
@@ -35,13 +35,13 @@ if local:
     indir = outdir
     mcs = [s3p15]
 else:
-    outdir = '/n/holystore01/LABS/guenette_lab/Users/tcontreras/trackingplane/plots/'
-    indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
+    outdir = '/n/holystore01/LABS/guenette_lab/Users/tcontreras/trackingplane/plots/krypton/'
+    indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/" #highenergy/"
     mcs = [s3p3, s3p7, s3p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]
     
 for mc in mcs:
     if mc['dir'] == "fullcoverage":
-        mc["files"] = [indir+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+        mc["files"] = [indir+mc['dir']+"/s3mmp3mm/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
     else:
         mc["files"] = [indir+'teflonhole_5mm/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
     
@@ -86,7 +86,14 @@ for mc in mcs:
     
 for mc in mcs:
     plt.hist(mc['all_sipms'].charge, label='sipms', range=(0,85000), bins=100)
-    plt.hist(mc['all_pmts'].charge, label='pmts', range=(0,85000), bins=100)
+    plt.xlabel("Charge per event [pes]")
+    plt.title("NEXT-100, 3mm sipms, "+str(mc['pitch'])+' pitch')
+    plt.legend()
+    plt.savefig(outdir+'energy_distr_'+mc['dir']+'.png')
+    plt.close()
+
+for mc in mcs:
+    plt.hist(mc['all_sipms'].charge, label='sipms', range=(0,20000), bins=100)
     plt.xlabel("Charge per event [pes]")
     plt.title("NEXT-100, 3mm sipms, "+str(mc['pitch'])+' pitch')
     plt.legend()
