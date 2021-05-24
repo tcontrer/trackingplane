@@ -19,6 +19,7 @@ from ic_functions import *
 print("Starting")
 nfiles = 99 # will fail if too few events
 local = False
+event_type = 'kr'
 
 # Create dictionary to hold run info
 print("Creating dictionaries")
@@ -35,24 +36,27 @@ if local:
     indir = outdir
     mcs = [s3p15]
 else:
-    outdir = '/n/holystore01/LABS/guenette_lab/Users/tcontreras/trackingplane/plots/'
-    indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/" #/highenergy/"
-    mcs = [s3p3, s3p6] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                                                       
-
+    if event_str == 'kr'
+        outdir = '/n/holystore01/LABS/guenette_lab/Users/tcontreras/trackingplane/plots/krypton/'
+        indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/" 
+        extra_dir = 's3mmp3mm'
+    else:
+        outdir = '/n/holystore01/LABS/guenette_lab/Users/tcontreras/trackingplane/plots/'
+        indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
+        extra_dir = ''
+    mcs = [s3p3, s3p7, s3p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]
+    
 for mc in mcs:
     if mc['dir'] == "fullcoverage":
-        mc["files"] = [indir+mc['dir']+"/s3mmp3mm/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+        mc["files"] = [indir+mc['dir']+extra_dir+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
     else:
         mc["files"] = [indir+'teflonhole_5mm/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
-    
+        
     
 for mc in mcs:
     
-    all_sipms = pd.DataFrame()
-    all_pmts = pd.DataFrame()
-    events_allsensors = pd.DataFrame()
-    events_allsipms = pd.DataFrame()
-    events_allpmts = pd.DataFrame()
+    sipms = pd.DataFrame()
+    pmts = pd.DataFrame()
     for file in mc['files']:
         sns_response = pd.read_hdf(file, 'MC/sns_response')
         sns_positions = pd.read_hdf(file, 'MC/sns_positions')
@@ -70,7 +74,7 @@ for mc in mcs:
         # Make data frame with sipms ids, position, and total charge
         new_sipm_positions = sipm_positions.set_index('sensor_id')
         new_df = pd.concat([new_sipm_positions.iloc[:,1:5], summed_charges], axis=1)
-        all_sipms = all_sipms.append(new_df)
+        sipms = sipms.append(new_df)
 
         # pmts
         pmt_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] < 60]
@@ -79,19 +83,24 @@ for mc in mcs:
         pmt_positions = sns_pos_sorted[sns_pos_sorted["sensor_name"].str.contains("Pmt")]
         new_pmt_positions = pmt_positions.set_index('sensor_id')
         new_df_pmt = pd.concat([new_pmt_positions.iloc[:,1:5], summed_charges_pmt], axis=1)
-        all_pmts = all_pmts.append(new_df_pmt)
+        pmts = pmts.append(new_df_pmt)
 
-    mc['all_sipms'] = all_sipms
-    mc['all_pmts'] = all_pmts
+    mc['sipms'] = sipms
+    mc['pmts'] = pmts
     
 for mc in mcs:
-    mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'] = EnergyRes(mc['all_sipms'].charge)
-    mc['pmt_eres'], mc['pmt_fwhm'], mc['pmt_mean'] = EnergyRes(mc['all_pmts'].charge)
-    
+    mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'] = EnergyRes(mc['sipms'].charge)
+    mc['pmt_eres'], mc['pmt_fwhm'], mc['pmt_mean'] = EnergyRes(mc['pmts'].charge)
+   
+if event_type == 'kr':
+    event_str = '41.5 keV'
+else:
+    event_str = r'$Q_{\beta \beta}$''
+
 pitches = [mc['pitch'] for mc in mcs]
 plt.plot(pitches, [mc['sipm_eres'] for mc in mcs], 'o')
 plt.xlabel('SiPM pitch [mm]')
-plt.ylabel(r'$E_{res}$ FWHM at $Q_{\beta \beta}$')
+plt.ylabel(r'$E_{res}$ FWHM at '+event_str)
 plt.title('SiPM Energy Resolution')
 plt.savefig(outdir+'sipm_eres.png')
 plt.close()
@@ -99,7 +108,7 @@ plt.close()
 plt.plot(pitches, [mc['pmt_eres'] for mc in mcs], 'o')
 plt.xlabel('SiPM pitch [mm]')
 plt.title('PMT Energy Resolution')
-plt.ylabel(r'$E_{res}$ FWHM at $Q_{\beta \beta}$')
+plt.ylabel(r'$E_{res}$ FWHM at '+event_str)
 plt.savefig(outdir+'pmt_eres.png')
 plt.close()
 
