@@ -78,8 +78,8 @@ for mc in mcs:
     mc['pmts'] = pmts
     
 if event_type == 'kr':
-    sipm_range = (0, 85000)
-    pmt_range = (0, 85000)
+    sipm_range = (0, 350000)
+    pmt_range = (0, 10000)
 else:
     sipm_range = (0, 5000)
     pmt_range = (0, 100000)
@@ -102,7 +102,7 @@ for mc in mcs:
     plt.close()
     
 for mc in mcs:
-    plt.hist(mc['sipms'].charge, label=mc['dir'], bins=100)
+    plt.hist(mc['sipms'].charge, label=mc['dir'], bins=100, range=sipm_range)
 plt.xlabel("Charge per event in SiPMs [pes]")
 plt.title("NEXT-100, 3mm sipms")
 plt.legend()
@@ -110,7 +110,7 @@ plt.savefig(outdir+'sipm_energy_distr_comp.png')
 plt.close()
 
 for mc in mcs:
-    plt.hist(mc['pmts'].charge, label=mc['dir'], bins=100)
+    plt.hist(mc['pmts'].charge, label=mc['dir'], bins=100, range=pmt_range)
 plt.xlabel("Charge per event in PMTs [pes]")
 plt.title("NEXT-100, 3mm sipms")
 plt.legend()
