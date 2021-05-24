@@ -59,31 +59,19 @@ for mc in mcs:
     pmts = pd.DataFrame()
     for file in mc['files']:
         sns_response = pd.read_hdf(file, 'MC/sns_response')
-        sns_positions = pd.read_hdf(file, 'MC/sns_positions')
-        
-        # Sort to get the sipms
-        sns_pos_sorted = sns_positions.sort_values(by=['sensor_id'])
-        sipm_positions = sns_pos_sorted[sns_pos_sorted["sensor_name"].str.contains("SiPM")]
-
-        # Sort to sum up all charges for each sipms
         sns_response_sorted = sns_response.sort_values(by=['sensor_id'])
+
+        # Sum up all charges per event in sipms
         sipm_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] >999]
-        response_byid = sipm_response.groupby('sensor_id')
-        summed_charges = response_byid.agg({"charge":"sum"}) 
-
-        # Make data frame with sipms ids, position, and total charge
-        new_sipm_positions = sipm_positions.set_index('sensor_id')
-        new_df = pd.concat([new_sipm_positions.iloc[:,1:5], summed_charges], axis=1)
-        sipms = sipms.append(new_df)
-
-        # pmts
+        sipm_response_byevent = sipm_response.groupby('event_id')
+        charges = sipm_response_byevent.agg({"charge":"sum"})
+        sipms = sipms.append(charges)
+        
+        # Sum up all charges per event in pmts
         pmt_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] < 60]
-        response_byid_pmt = pmt_response.groupby('sensor_id')
-        summed_charges_pmt = response_byid_pmt.agg({"charge":"sum"})
-        pmt_positions = sns_pos_sorted[sns_pos_sorted["sensor_name"].str.contains("Pmt")]
-        new_pmt_positions = pmt_positions.set_index('sensor_id')
-        new_df_pmt = pd.concat([new_pmt_positions.iloc[:,1:5], summed_charges_pmt], axis=1)
-        pmts = pmts.append(new_df_pmt)
+        pmt_response_byevent = pmt_response.groupby('event_id')
+        charges = pmt_response_byevent.agg({"charge":"sum"})
+        pmts = pmts.append(charges)
 
     mc['sipms'] = sipms
     mc['pmts'] = pmts
