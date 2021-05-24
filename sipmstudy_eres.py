@@ -95,7 +95,7 @@ for mc in mcs:
 if event_type == 'kr':
     event_str = '41.5 keV'
 else:
-    event_str = r'$Q_{\beta \beta}$''
+    event_str = r'$Q_{\beta \beta}$'
 
 pitches = [mc['pitch'] for mc in mcs]
 plt.plot(pitches, [mc['sipm_eres'] for mc in mcs], 'o')

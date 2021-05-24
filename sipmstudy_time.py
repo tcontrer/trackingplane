@@ -12,7 +12,7 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 print("Starting")
-nfiles = 1
+nfiles = 10
 local = False
 event_type = 'kr'
 

@@ -69,8 +69,8 @@ for mc in mcs:
         
         # Sum up all charges per event in pmts
         pmt_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] < 60]
-        pmt_response_byevent = sipm_response.groupby('event_id')
-        charges = sipm_response_byevent.agg({"charge":"sum"})
+        pmt_response_byevent = pmt_response.groupby('event_id')
+        charges = pmt_response_byevent.agg({"charge":"sum"})
         pmts = pmts.append(charges)
     
 
@@ -86,7 +86,7 @@ else:
     
     
 for mc in mcs:
-    plt.hist(mc['sipms'].charge, label='sipms', range=sipm_range, bins=100)
+    plt.hist(mc['sipms'].charge, label='sipms', bins=100)
     plt.xlabel("Charge per event [pes]")
     plt.title("NEXT-100, 3mm sipms, "+str(mc['pitch'])+' pitch')
     plt.legend()
@@ -94,7 +94,7 @@ for mc in mcs:
     plt.close()
 
 for mc in mcs:
-    plt.hist(mc['sipms'].charge, label='sipms', range=pmt_range, bins=100)
+    plt.hist(mc['sipms'].charge, label='sipms', bins=100)
     plt.xlabel("Charge per event [pes]")
     plt.title("NEXT-100, 3mm sipms, "+str(mc['pitch'])+' pitch')
     plt.legend()
@@ -102,7 +102,7 @@ for mc in mcs:
     plt.close()
     
 for mc in mcs:
-    plt.hist(mc['sipms'].charge, label=mc['dir'], range=sipm_range, bins=100)
+    plt.hist(mc['sipms'].charge, label=mc['dir'], bins=100)
 plt.xlabel("Charge per event in SiPMs [pes]")
 plt.title("NEXT-100, 3mm sipms")
 plt.legend()
@@ -110,7 +110,7 @@ plt.savefig(outdir+'sipm_energy_distr_comp.png')
 plt.close()
 
 for mc in mcs:
-    plt.hist(mc['pmts'].charge, label=mc['dir'], range=pmt_range, bins=100)
+    plt.hist(mc['pmts'].charge, label=mc['dir'], bins=100)
 plt.xlabel("Charge per event in PMTs [pes]")
 plt.title("NEXT-100, 3mm sipms")
 plt.legend()

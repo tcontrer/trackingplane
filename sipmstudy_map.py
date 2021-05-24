@@ -14,7 +14,7 @@ from ic_functions import *
 
 
 print("Starting")
-nfiles = 10 # fails if there are not enough events
+nfiles = 99 # fails if there are not enough events
 local = False
 event_type = 'kr'
 
