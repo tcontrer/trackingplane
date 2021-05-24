@@ -78,4 +78,4 @@ def EnergyRes(x):
     fwhm = 2.355*sigma
     e_event = 41 # keV
     eres = fwhm/mu
-    return eres, fwhm, mu
+    return eres*100, fwhm, mu
