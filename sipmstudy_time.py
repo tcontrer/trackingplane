@@ -32,11 +32,11 @@ if local:
     mcs = [s3p15]
 else:
     if event_type == 'kr':
-        outdir = '/n/holystore01/LABS/guenette_lab/Users/tcontreras/trackingplane/plots/krypton/'
+        outdir = '/n/home12/tcontreras/plots/trackingplane/krypton/'
         indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/" 
         extra_dir = '/s3mmp3mm'
     else:
-        outdir = '/n/holystore01/LABS/guenette_lab/Users/tcontreras/trackingplane/plots/'
+        outdir = '/n/home12/tcontreras/plots/trackingplane/highenergy/'
         indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
         extra_dir = ''
     mcs = [s3p3, s3p7, s3p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]
