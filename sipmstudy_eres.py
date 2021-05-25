@@ -18,7 +18,7 @@ from fit_functions import fit_energy, plot_fit_energy, print_fit_energy, get_fit
 from ic_functions import *
 
 print("Starting")
-nfiles = 10 # will fail if too few events
+nfiles = 999 # will fail if too few events
 local = False
 event_type = 'qbb'
 
@@ -38,11 +38,11 @@ if local:
     mcs = [s3p15]
 else:
     if event_type == 'kr':
-        outdir = '/n/holystore01/LABS/guenette_lab/Users/tcontreras/trackingplane/plots/krypton/'
+        outdir = '/n/home12/tcontreras/plots/trackingplane/krypton/'
         indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/" 
         extra_dir = '/s3mmp3mm'
     else:
-        outdir = '/n/holystore01/LABS/guenette_lab/Users/tcontreras/trackingplane/plots/'
+        outdir = '/n/home12/tcontreras/plots/trackingplane/highenergy/'
         indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
         extra_dir = ''
     mcs = [s3p3, s3p7, s3p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]
@@ -78,14 +78,22 @@ for mc in mcs:
     mc['pmts'] = pmts
     
 for mc in mcs:
-    sipm_fit = fit_energy(mc['sipms'].charge, 100, (np.min(mc['sipms'].charge), np.max(mc['sipms'].charge)))
+    bins_fit = 25
+    if event_type == 'kr':
+        fit_range_sipms = (np.min(mc['sipms'].charge), np.max(mc['sipms'].charge))
+        fit_range_pmts = (np.min(mc['pmts'].charge), np.max(mc['pmts'].charge))
+    else:
+        fit_range_sipms = (np.min(mc['sipms'].charge) - np.std(mc['sipms'].charge)/2., np.max(mc['sipms'].charge) + np.std(mc['sipms'].charge)/2.)
+        fit_range_pmts = (np.min(mc['pmts'].charge) - np.std(mc['pmts'].charge), np.max(mc['pmts'].charge) + np.std(mc['pmts'].charge)/2.)
+
+    sipm_fit = fit_energy(mc['sipms'].charge, bins_fit, fit_range_sipms)
     mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'] = get_fit_params(sipm_fit)
     print_fit_energy(sipm_fit)
     plot_fit_energy(sipm_fit)
     plt.savefig(outdir+mc['dir']+'_sipm_eres_fit.png')
     plt.close()
 
-    pmt_fit = fit_energy(mc['pmts'].charge, 100, (np.min(mc['pmts'].charge), np.max(mc['pmts'].charge)))
+    pmt_fit = fit_energy(mc['pmts'].charge, bins_fit, fit_range_pmts)
     mc['pmt_eres'], mc['pmt_fwhm'], mc['pmt_mean'] = get_fit_params(pmt_fit)
     print_fit_energy(pmt_fit)
     plot_fit_energy(pmt_fit)
