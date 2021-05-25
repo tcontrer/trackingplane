@@ -18,9 +18,9 @@ from fit_functions import fit_energy, plot_fit_energy, print_fit_energy, get_fit
 from ic_functions import *
 
 print("Starting")
-nfiles = 5 # will fail if too few events
+nfiles = 10 # will fail if too few events
 local = False
-event_type = 'kr'
+event_type = 'qbb'
 
 # Create dictionary to hold run info
 print("Creating dictionaries")
