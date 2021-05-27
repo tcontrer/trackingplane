@@ -18,7 +18,7 @@ from fit_functions import fit_energy, plot_fit_energy, print_fit_energy, get_fit
 from ic_functions import *
 
 print("Starting")
-nfiles = 999 # will fail if too few events
+nfiles = 100 # will fail if too few events
 local = False
 event_type = 'qbb'
 
@@ -76,28 +76,29 @@ for mc in mcs:
 
     mc['sipms'] = sipms
     mc['pmts'] = pmts
+
     
 for mc in mcs:
-    bins_fit = 25
+    bins_fit = 500
     if event_type == 'kr':
         fit_range_sipms = (np.min(mc['sipms'].charge), np.max(mc['sipms'].charge))
         fit_range_pmts = (np.min(mc['pmts'].charge), np.max(mc['pmts'].charge))
     else:
-        fit_range_sipms = (np.min(mc['sipms'].charge) - np.std(mc['sipms'].charge)/2., np.max(mc['sipms'].charge) + np.std(mc['sipms'].charge)/2.)
-        fit_range_pmts = (np.min(mc['pmts'].charge) - np.std(mc['pmts'].charge), np.max(mc['pmts'].charge) + np.std(mc['pmts'].charge)/2.)
+        fit_range_sipms = (np.mean(mc['sipms'].charge) - np.std(mc['sipms'].charge), np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge))
+        fit_range_pmts = (np.mean(mc['pmts'].charge) - np.std(mc['pmts'].charge), np.mean(mc['pmts'].charge) + np.std(mc['pmts'].charge))
 
     sipm_fit = fit_energy(mc['sipms'].charge, bins_fit, fit_range_sipms)
     mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'] = get_fit_params(sipm_fit)
     print_fit_energy(sipm_fit)
     plot_fit_energy(sipm_fit)
-    plt.savefig(outdir+mc['dir']+'_sipm_eres_fit.png')
+    plt.savefig(outdir+'eres_'+mc['dir']+'_sipm_fit.png')
     plt.close()
 
     pmt_fit = fit_energy(mc['pmts'].charge, bins_fit, fit_range_pmts)
     mc['pmt_eres'], mc['pmt_fwhm'], mc['pmt_mean'] = get_fit_params(pmt_fit)
     print_fit_energy(pmt_fit)
     plot_fit_energy(pmt_fit)
-    plt.savefig(outdir+mc['dir']+'_pmt_eres_fit.png')
+    plt.savefig(outdir+'eres_'+mc['dir']+'_pmt_fit.png')
     plt.close()
    
 if event_type == 'kr':
@@ -110,38 +111,38 @@ plt.plot(pitches, [mc['sipm_eres'] for mc in mcs], 'o')
 plt.xlabel('SiPM pitch [mm]')
 plt.ylabel(r'$E_{res}$ FWHM at '+event_str)
 plt.title('SiPM Energy Resolution')
-plt.savefig(outdir+'sipm_eres.png')
+plt.savefig(outdir+'eres_'+'sipm.png')
 plt.close()
 
 plt.plot(pitches, [mc['pmt_eres'] for mc in mcs], 'o')
 plt.xlabel('SiPM pitch [mm]')
 plt.title('PMT Energy Resolution')
 plt.ylabel(r'$E_{res}$ FWHM at '+event_str)
-plt.savefig(outdir+'pmt_eres.png')
+plt.savefig(outdir+'eres_'+'pmt.png')
 plt.close()
 
 plt.plot(pitches, [mc['sipm_fwhm'] for mc in mcs], 'o')
 plt.xlabel('SiPM pitch [mm]')
 plt.ylabel('SiPM FWHM')
-plt.savefig(outdir+'sipm_fwhm.png')
+plt.savefig(outdir+'eres_'+'sipm_fwhm.png')
 plt.close()
 
 plt.plot(pitches, [mc['pmt_fwhm'] for mc in mcs], 'o')
 plt.xlabel('SiPM pitch [mm]')
 plt.ylabel('PMT FWHM')
-plt.savefig(outdir+'pmt_fwhm.png')
+plt.savefig(outdir+'eres_'+'pmt_fwhm.png')
 plt.close()
 
 plt.plot(pitches, [mc['sipm_mean'] for mc in mcs], 'o')
 plt.xlabel('SiPM pitch [mm]')
 plt.ylabel('SiPM Mean')
-plt.savefig(outdir+'sipm_mean.png')
+plt.savefig(outdir+'eres_'+'sipm_mean.png')
 plt.close()
 
 plt.plot(pitches, [mc['pmt_mean'] for mc in mcs], 'o')
 plt.ylabel('PMT Mean')
 plt.xlabel('SiPM pitch [mm]')
-plt.savefig(outdir+'pmt_mean.png')
+plt.savefig(outdir+'eres_'+'pmt_mean.png')
 plt.close()
 
 

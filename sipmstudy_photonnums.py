@@ -77,7 +77,7 @@ for mc in mcs:
         plt.hist(mc['top_sipms'][i]['charge'])
         plt.xlabel('charge [pes]')
         plt.title('NEXT-100, 3mmx3mm SiPMs, '+str(mc['pitch'])+' pitch, '+str(i)+' largest sipm signal per event')
-        plt.savefig(outdir+mc['dir']+"_"+str(i)+"largest_sipm.png")
+        plt.savefig(outdir+'photonnums_'+mc['dir']+"_"+str(i)+"largest_sipm.png")
         plt.close()
 
 # Plot top 5 sipms for each mc
@@ -87,7 +87,7 @@ for mc in mcs:
     plt.xlabel('charge [pes]')
     plt.title('NEXT-100, 3mmx3mm SiPMs, '+str(mc['pitch'])+' pitch')
     plt.legend()
-    plt.savefig(outdir+mc['dir']+"largests_5sipms_comp.png")
+    plt.savefig(outdir+'photonnums_'++mc['dir']+"largests_5sipms_comp.png")
     plt.close()
 
 # Plot top i-th sipm across mcs
@@ -97,5 +97,5 @@ for i in range(0,10):
     plt.xlabel('charge [pes]')
     plt.title('NEXT-100, 3mmx3mm SiPMs, '+str(i)+" largest sipm signal per event")
     plt.legend()
-    plt.savefig(outdir+str(i)+"largest_sipm_comp.png")
+    plt.savefig(outdir+'photonnums_'++str(i)+"largest_sipm_comp.png")
     plt.close()

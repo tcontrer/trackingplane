@@ -81,24 +81,24 @@ if event_type == 'kr':
     sipm_range = (0, 350000)
     pmt_range = (0, 10000)
 else:
-    sipm_range = (0, 5000)
-    pmt_range = (0, 100000)
+    sipm_range = (0, 21000000)
+    pmt_range = (0, 600000)
     
     
 for mc in mcs:
     plt.hist(mc['sipms'].charge, label='sipms', bins=100)
-    plt.xlabel("Charge per event [pes]")
+    plt.xlabel("Charge per event in SiPMS [pes]")
     plt.title("NEXT-100, 3mm sipms, "+str(mc['pitch'])+' pitch')
     plt.legend()
-    plt.savefig(outdir+'energy_distr_'+mc['dir']+'.png')
+    plt.savefig(outdir+'distr_'+'sipms_energy_'+mc['dir']+'.png')
     plt.close()
 
 for mc in mcs:
-    plt.hist(mc['sipms'].charge, label='sipms', bins=100)
-    plt.xlabel("Charge per event [pes]")
+    plt.hist(mc['pmts'].charge, label='sipms', bins=100)
+    plt.xlabel("Charge per event in PMTs[pes]")
     plt.title("NEXT-100, 3mm sipms, "+str(mc['pitch'])+' pitch')
     plt.legend()
-    plt.savefig(outdir+'energy_distr_'+mc['dir']+'.png')
+    plt.savefig(outdir+'distr_'+'pmts_energy_'+mc['dir']+'.png')
     plt.close()
     
 for mc in mcs:
@@ -106,7 +106,7 @@ for mc in mcs:
 plt.xlabel("Charge per event in SiPMs [pes]")
 plt.title("NEXT-100, 3mm sipms")
 plt.legend()
-plt.savefig(outdir+'sipm_energy_distr_comp.png')
+plt.savefig(outdir+'distr_'+'sipm_energy_comp.png')
 plt.close()
 
 for mc in mcs:
@@ -114,6 +114,6 @@ for mc in mcs:
 plt.xlabel("Charge per event in PMTs [pes]")
 plt.title("NEXT-100, 3mm sipms")
 plt.legend()
-plt.savefig(outdir+'pmt_energy_distr_comp.png')
+plt.savefig(outdir+'distr_'+'pmt_energy_comp.png')
 plt.close()
 

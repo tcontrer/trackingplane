@@ -77,12 +77,12 @@ for mc in mcs:
     plt.hist(mc["pmt_times"], bins=50, range=(0,2000))
     plt.xlabel('Event width by PMTs [microseconds]')
     plt.title('NEXT_100, 3mmx3mm SiPMs, '+str(mc['pitch'])+' pitch')
-    plt.savefig(outdir+mc['dir']+"_pmt_times.png")
+    plt.savefig(outdir+'time_'+mc['dir']+"_pmt.png")
     plt.close()
 
 for mc in mcs:
     plt.hist(mc["sipm_times"], bins=50, range=(0,2000))
     plt.xlabel('Event width by SiPMs [microseconds]')
     plt.title('NEXT_100, 3mmx3mm SiPMs, '+str(mc['pitch'])+' pitch')
-    plt.savefig(outdir+mc['dir']+"_sipm_times.png")
+    plt.savefig(outdir+'time_'+mc['dir']+"_sipm.png")
     plt.close()

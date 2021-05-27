@@ -96,10 +96,10 @@ nbins = 500//10
 for mc in mcs:
     h = hist2d(mc['sipm_map'].x, mc['sipm_map'].y, (nbins, nbins), weights = mc['sipm_map'].charge)
     labels("X [mm]", "Y [mm]", "SiPMs Light Distribution \n (NEXT-100, 6mm sipms, 10mm pitch)")
-    plt.savefig(outdir+'sipm_kr_map.png')
+    plt.savefig(outdir+'map_sipm_'+event_type+'.png')
     plt.close()
 
     h2 = hist2d(mc['pmt_map'].x, mc['pmt_map'].y, (nbins, nbins), weights = mc['pmt_map'].charge)
     labels("X [mm]", "Y [mm]", "PMTs Light Distribution \n (NEXT-100)")
-    plt.savefig(outdir+'pmt_kr_map.png')
+    plt.savefig(outdir+'map_pmt_'+event_type+'.png')
     plt.close()
