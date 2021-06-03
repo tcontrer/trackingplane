@@ -18,7 +18,7 @@ from fit_functions import fit_energy, plot_fit_energy, print_fit_energy, get_fit
 from ic_functions import *
 
 print("Starting")
-nfiles = 100 # will fail if too few events
+nfiles = 999 # will fail if too few events
 local = False
 event_type = 'qbb'
 
@@ -79,13 +79,13 @@ for mc in mcs:
 
     
 for mc in mcs:
-    bins_fit = 500
+    bins_fit = 50
     if event_type == 'kr':
         fit_range_sipms = (np.min(mc['sipms'].charge), np.max(mc['sipms'].charge))
         fit_range_pmts = (np.min(mc['pmts'].charge), np.max(mc['pmts'].charge))
     else:
-        fit_range_sipms = (np.mean(mc['sipms'].charge) - np.std(mc['sipms'].charge), np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge))
-        fit_range_pmts = (np.mean(mc['pmts'].charge) - np.std(mc['pmts'].charge), np.mean(mc['pmts'].charge) + np.std(mc['pmts'].charge))
+        fit_range_sipms = (np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge)/3., np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge))
+        fit_range_pmts = (np.mean(mc['pmts'].charge), np.mean(mc['pmts'].charge) + np.std(mc['pmts'].charge))
 
     sipm_fit = fit_energy(mc['sipms'].charge, bins_fit, fit_range_sipms)
     mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'] = get_fit_params(sipm_fit)
