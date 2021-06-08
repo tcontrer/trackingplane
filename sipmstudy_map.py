@@ -12,6 +12,10 @@ import matplotlib.pyplot as plt
 
 from ic_functions import *
 
+def Thresh_by_Event(group, args=dark_count):
+    event = group.index.tolist()[0] #.event_id.max()
+    thresh = dark_count.loc[event].dark_count
+    return group[group.charge > thresh]
 
 print("Starting")
 nfiles = 99 # fails if there are not enough events
@@ -70,6 +74,15 @@ for mc in mcs:
         sns_response_sorted = sns_response.sort_values(by=['sensor_id'])
         sipm_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] >999]
         pmt_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] < 60]
+        sipm_response = sipm_response.loc[sipm_response["time_bin"] >0]
+        pmt_response = pmt_response.loc[pmt_response["time_bin"] >0]
+
+        # Time length of events
+        pmt_timing = pmt_timing.append(pmt_response.groupby(['event_id'])\
+                        .apply(lambda group: group['time_bin'].max() - group['time_bin'].min()).to_frame())
+        sipm_timing = sipm_timing.append(sipm_response.groupby(['event_id'])\
+                        .apply(lambda group: group['time_bin'].max() - group['time_bin'].min()).to_frame())
+
 
         # Summed pmt energy per event
         response_perevent_pmt = pmt_response.groupby('event_id')
@@ -79,7 +92,18 @@ for mc in mcs:
         response_perevent_sipm = sipm_response.groupby('event_id')
         summed_charges_byevent_sipm = response_perevent_sipm.agg({"charge":"sum"})
 
+        sipm_response = sipm_response.loc[sipm_response["time_bin"] >0]
+        pmt_response = pmt_response.loc[pmt_response["time_bin"] >0]
+
+        dark_rate = 10.
+        dark_count  = sipm_timing*dark_rate
+        dark_count = dark_count.rename(columns={0:'dark_count'})
+        this = summed_charges_byevent_sipm.groupby('event_id')
+        summed_charged_byevent_sipm = this.apply(Thresh_by_Event, args=(dark_count))#.set_index('event_id') #.groupby('event_id')
+
+
         # Position of the event(sipm with the max charge)
+        sipm_response = sipm_response[sipm_response.event_id.isin(summed_charges_byevent_sipm.index)]
         idx = sipm_response.groupby(['event_id'])['charge'].transform(max) == sipm_response['charge']
         max_sipms = sipm_response[idx].sort_values('sensor_id').set_index('sensor_id')
         new_max_sipm_positions = sipm_positions.set_index('sensor_id')

@@ -17,10 +17,17 @@ from fit_functions import fit_energy, plot_fit_energy, print_fit_energy, get_fit
 
 from ic_functions import *
 
+def Thresh_by_Event(group, args=dark_count):
+    event = group.index.tolist()[0] #.event_id.max()
+    thresh = dark_count.loc[event].dark_count
+    return group[group.charge > thresh]
+
 print("Starting")
-nfiles = 999 # will fail if too few events
+nfiles = 99 # will fail if too few events
 local = False
-event_type = 'qbb'
+event_type = 'kr'
+
+tp_area = np.pi * (984./2.)**2 # mm^2
 
 # Create dictionary to hold run info
 print("Creating dictionaries")
@@ -58,6 +65,8 @@ for mc in mcs:
     
     sipms = pd.DataFrame()
     pmts = pd.DataFrame()
+    sipm_timing = pd.DataFrame()
+    pmt_timing = pd.DataFrame()
     for file in mc['files']:
         sns_response = pd.read_hdf(file, 'MC/sns_response')
         sns_response_sorted = sns_response.sort_values(by=['sensor_id'])
@@ -74,8 +83,27 @@ for mc in mcs:
         charges = pmt_response_byevent.agg({"charge":"sum"})
         pmts = pmts.append(charges)
 
+        # Time length of events
+        pmt_timing = pmt_timing.append(pmt_response.groupby(['event_id'])\
+                    .apply(lambda group: group['time_bin'].max() - group['time_bin'].min()).to_frame())
+        sipm_timing = sipm_timing.append(sipm_response.groupby(['event_id'])\
+                    .apply(lambda group: group['time_bin'].max() - group['time_bin'].min()).to_frame())
+
+    # Threshold event based on dark noise
+    this = sipms.groupby('event_id')
+    dark_rate = 10.
+    dark_count  = sipm_timing*dark_rate
+    dark_count = dark_count.rename(columns={0:'dark_count'})
+    sipms = this.apply(Thresh_by_Event, args=(dark_count))#.set_index('event_id') #.groupby('event_id')
+
+    sns_positions = pd.read_hdf(file, 'MC/sns_positions')
+    sns_pos_sorted = sns_positions.sort_values(by=['sensor_id'])
+    sipm_positions = sns_pos_sorted[sns_pos_sorted["sensor_name"].str.contains("SiPM")]
+    mc['num_sipms'] = len(sipm_positions)
+    mc['coverage'] = 100. * len(sipm_positions) * mc['size']**2 / tp_area
     mc['sipms'] = sipms
     mc['pmts'] = pmts
+    mc['dark_count'] = dark_count.mean()
 
     
 for mc in mcs:
@@ -86,6 +114,8 @@ for mc in mcs:
     else:
         fit_range_sipms = (np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge)/3., np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge))
         fit_range_pmts = (np.mean(mc['pmts'].charge), np.mean(mc['pmts'].charge) + np.std(mc['pmts'].charge))
+
+    print(mc['dir']+': Average Dark count = '+str(mc['dark_count')))
 
     sipm_fit = fit_energy(mc['sipms'].charge, bins_fit, fit_range_sipms)
     mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'] = get_fit_params(sipm_fit)
@@ -143,6 +173,46 @@ plt.plot(pitches, [mc['pmt_mean'] for mc in mcs], 'o')
 plt.ylabel('PMT Mean')
 plt.xlabel('SiPM pitch [mm]')
 plt.savefig(outdir+'eres_'+'pmt_mean.png')
+plt.close()
+
+
+coverages = [mc['coverage'] for mc in mcs]
+plt.plot(coverages, [mc['sipm_eres'] for mc in mcs], 'o')
+plt.xlabel('Tracking Plane Coverage %')
+plt.ylabel(r'$E_{res}$ FWHM at '+event_str)
+plt.title('SiPM Energy Resolution')
+plt.savefig(outdir+'eres_coverage'+'sipm.png')
+plt.close()
+
+plt.plot(coverages, [mc['pmt_eres'] for mc in mcs], 'o')
+plt.xlabel('Tracking Plane Coverage [mm]')
+plt.title('PMT Energy Resolution')
+plt.ylabel(r'$E_{res}$ FWHM at '+event_str)
+plt.savefig(outdir+'eres_coverage'+'pmt.png')
+plt.close()
+
+plt.plot(coverages, [mc['sipm_fwhm'] for mc in mcs], 'o')
+plt.xlabel('Tracking Plane Coverage %')
+plt.ylabel('SiPM FWHM')
+plt.savefig(outdir+'eres_coverage'+'sipm_fwhm.png')
+plt.close()
+
+plt.plot(coverages, [mc['pmt_fwhm'] for mc in mcs], 'o')
+plt.xlabel('Tracking Plane Coverage %')
+plt.ylabel('PMT FWHM')
+plt.savefig(outdir+'eres_coverage'+'pmt_fwhm.png')
+plt.close()
+
+plt.plot(coverages, [mc['sipm_mean'] for mc in mcs], 'o')
+plt.xlabel('Tracking Plane Coverage %')
+plt.ylabel('SiPM Mean')
+plt.savefig(outdir+'eres_coverage'+'sipm_mean.png')
+plt.close()
+
+plt.plot(coverages, [mc['pmt_mean'] for mc in mcs], 'o')
+plt.ylabel('PMT Mean')
+plt.xlabel('Tracking Plane Coverage %')
+plt.savefig(outdir+'eres_coverage'+'pmt_mean.png')
 plt.close()
 
 
