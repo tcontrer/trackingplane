@@ -18,6 +18,20 @@ def Thresh_by_Event(group, dark_count):
     thresh = dark_count.loc[event].dark_count
     return group[group.charge > thresh]
 
+def Center_of_Event(sipm_response_in_event, sipm_positions):
+    top_sipms = sipm_response_in_event[sipm_response_in_event.charge > max(sipm_response_in_event.charge)*.1]
+    sensor_positions = sipm_positions.loc[sipm_positions.sensor_id.isin(top_sipms.sensor_id.tolist())]
+    sensor_positions = sensor_positions.reindex(sensor_positions.index.repeat(top_sipms.groupby('sensor_id').sensor_id.count().values))
+    top_sipms = top_sipms.merge(sensor_positions)
+    
+    x = np.sum(top_sipms.charge*top_sipms.x)/np.sum(top_sipms.charge)
+    y = np.sum(top_sipms.charge*top_sipms.y)/np.sum(top_sipms.charge)
+    z = np.sum(top_sipms.charge*top_sipms.z)/np.sum(top_sipms.charge)
+    charge = np.sum(top_sipms.charge)
+    event_id = top_sipms.event_id[0]
+    
+    return pd.Series({'event_id':event_id, 'charge':charge,'x':x, 'y':y, 'z':z})
+
 print("Starting")
 nfiles = 1 # fails if there are not enough events
 local = True
@@ -97,29 +111,17 @@ for mc in mcs:
         # Summed sipm energy per event
         response_perevent_sipm = sipm_response.groupby('event_id')
         summed_charges_byevent_sipm = response_perevent_sipm.agg({"charge":"sum"})
-
-        sipm_response = sipm_response.loc[sipm_response["time_bin"] >0]
-        pmt_response = pmt_response.loc[pmt_response["time_bin"] >0]
-
+        
         dark_rate = 10.
         dark_count  = sipm_timing*dark_rate
         dark_count = dark_count.rename(columns={0:'dark_count'})
         this = summed_charges_byevent_sipm.groupby('event_id')
         summed_charged_byevent_sipm = this.apply(Thresh_by_Event, (dark_count))#.set_index('event_id') #.groupby('event_id')
 
-
         # Position of the event(sipm with the max charge)
-        sipm_response = sipm_response[sipm_response.event_id.isin(summed_charges_byevent_sipm.index)]
-        idx = sipm_response.groupby(['event_id'])['charge'].transform(max) == sipm_response['charge']
-        max_sipms = sipm_response[idx].sort_values('sensor_id').set_index('sensor_id')
-        new_max_sipm_positions = sipm_positions.set_index('sensor_id')
-        this = new_max_sipm_positions.loc[max_sipms.index.values.tolist()]
-        event_map = pd.concat([max_sipms.loc[:,'event_id'],this.loc[:,['x','y','z']]], axis=1).set_index('event_id').sort_values(by='event_id') 
+        sipm_map = sipm_map.append(sipm_response.groupby('event_id').apply(Center_of_Event, sipm_positions))
         
-        pmt_map = pmt_map.append(pd.concat([summed_charges_byevent_pmt,event_map],axis=1))
-        sipm_map = sipm_map.append(pd.concat([summed_charges_byevent_sipm,event_map],axis=1))
-
-    mc["pmt_map"] = pmt_map
+    #mc["pmt_map"] = pmt_map
     mc["sipm_map"] = sipm_map
 
 nbins = 500//10
@@ -129,7 +131,7 @@ for mc in mcs:
     plt.savefig(outdir+'map_sipm_'+event_type+'.png')
     plt.close()
 
-    h2 = hist2d(mc['pmt_map'].x, mc['pmt_map'].y, (nbins, nbins), weights = mc['pmt_map'].charge)
-    labels("X [mm]", "Y [mm]", "PMTs Light Distribution \n (NEXT-100)")
-    plt.savefig(outdir+'map_pmt_'+event_type+'.png')
-    plt.close()
+    #h2 = hist2d(mc['pmt_map'].x, mc['pmt_map'].y, (nbins, nbins), weights = mc['pmt_map'].charge)
+    #labels("X [mm]", "Y [mm]", "PMTs Light Distribution \n (NEXT-100)")
+    #plt.savefig(outdir+'map_pmt_'+event_type+'.png')
+    #plt.close()
