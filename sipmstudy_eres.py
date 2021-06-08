@@ -17,14 +17,14 @@ from fit_functions import fit_energy, plot_fit_energy, print_fit_energy, get_fit
 
 from ic_functions import *
 
-def Thresh_by_Event(group, args=dark_count):
+def Thresh_by_Event(group, dark_count):
     event = group.index.tolist()[0] #.event_id.max()
     thresh = dark_count.loc[event].dark_count
     return group[group.charge > thresh]
 
 print("Starting")
-nfiles = 99 # will fail if too few events
-local = False
+nfiles = 1 # will fail if too few events
+local = True
 event_type = 'kr'
 
 tp_area = np.pi * (984./2.)**2 # mm^2
@@ -58,8 +58,10 @@ for mc in mcs:
     if mc['dir'] == "fullcoverage":
         mc["files"] = [indir+mc['dir']+extra_dir+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
     else:
-        mc["files"] = [indir+'teflonhole_5mm/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
-        
+        if not local:
+            mc["files"] = [indir+'teflonhole_5mm/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+        else:
+            mc["files"] = [indir+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
     
 for mc in mcs:
     
@@ -94,7 +96,7 @@ for mc in mcs:
     dark_rate = 10.
     dark_count  = sipm_timing*dark_rate
     dark_count = dark_count.rename(columns={0:'dark_count'})
-    sipms = this.apply(Thresh_by_Event, args=(dark_count))#.set_index('event_id') #.groupby('event_id')
+    sipms = this.apply(Thresh_by_Event, (dark_count))#.set_index('event_id') #.groupby('event_id')
 
     sns_positions = pd.read_hdf(file, 'MC/sns_positions')
     sns_pos_sorted = sns_positions.sort_values(by=['sensor_id'])
@@ -115,7 +117,7 @@ for mc in mcs:
         fit_range_sipms = (np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge)/3., np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge))
         fit_range_pmts = (np.mean(mc['pmts'].charge), np.mean(mc['pmts'].charge) + np.std(mc['pmts'].charge))
 
-    print(mc['dir']+': Average Dark count = '+str(mc['dark_count')))
+    print(mc['dir']+': Average Dark count = '+str(mc['dark_count']))
 
     sipm_fit = fit_energy(mc['sipms'].charge, bins_fit, fit_range_sipms)
     mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'] = get_fit_params(sipm_fit)

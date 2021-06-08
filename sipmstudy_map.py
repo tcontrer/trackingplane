@@ -12,14 +12,15 @@ import matplotlib.pyplot as plt
 
 from ic_functions import *
 
-def Thresh_by_Event(group, args=dark_count):
+#dark_count = []
+def Thresh_by_Event(group, dark_count):
     event = group.index.tolist()[0] #.event_id.max()
     thresh = dark_count.loc[event].dark_count
     return group[group.charge > thresh]
 
 print("Starting")
-nfiles = 99 # fails if there are not enough events
-local = False
+nfiles = 1 # fails if there are not enough events
+local = True
 event_type = 'kr'
 
 # Create dictionary to hold run info
@@ -51,7 +52,10 @@ for mc in mcs:
     if mc['dir'] == "fullcoverage":
         mc["files"] = [indir+mc['dir']+extra_dir+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
     else:
-        mc["files"] = [indir+'teflonhole_5mm/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+        if not local:
+            mc["files"] = [indir+'teflonhole_5mm/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+        else:
+            mc["files"] = [indir+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
     
 # Loop over the simulations and collect the sensor info by storing in the mc dict
 print("About to loop")
@@ -59,6 +63,8 @@ for mc in mcs:
     print("Looping in mcs")
     pmt_map = pd.DataFrame()
     sipm_map = pd.DataFrame()
+    pmt_timing = pd.DataFrame()
+    sipm_timing = pd.DataFrame()
 
     for file in mc["files"]:
         print("Looping files in mc")
@@ -99,7 +105,7 @@ for mc in mcs:
         dark_count  = sipm_timing*dark_rate
         dark_count = dark_count.rename(columns={0:'dark_count'})
         this = summed_charges_byevent_sipm.groupby('event_id')
-        summed_charged_byevent_sipm = this.apply(Thresh_by_Event, args=(dark_count))#.set_index('event_id') #.groupby('event_id')
+        summed_charged_byevent_sipm = this.apply(Thresh_by_Event, (dark_count))#.set_index('event_id') #.groupby('event_id')
 
 
         # Position of the event(sipm with the max charge)
