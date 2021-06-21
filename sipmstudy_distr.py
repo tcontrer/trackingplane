@@ -17,7 +17,7 @@ from scipy.stats import norm
 from ic_functions import *
 
 print("Starting")
-nfiles = 2 # will fail if too few events
+nfiles = 100 # will fail if too few events
 local = False
 event_type = 'kr'
 
@@ -36,6 +36,12 @@ s3p15 = {"size":3, "pitch":15, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 15m
 s6p6 = {"size":6, "pitch":6,'teflon':'no_teflon', 'name':'6mm SiPM, full coverage', "dir":"fullcoverage", 'extra_dir':'/s6mmp6mm'}
 s6p7 = {"size":6, "pitch":7, 'teflon':'teflonhole_5mm', 'name': '6mm SiPM, 7mm pitch',"dir": "s6mmp7mm"}
 s6p15 = {"size":6, "pitch":15, 'teflon':'teflonhole_8mm', 'name': '6mm SiPM, 15mm pitch', "dir": "s6mmp15mm"}
+s6p15nt = {"size":6, "pitch":15, 'teflon':'no_teflon', 'name': '6mm SiPM, 15mm pitch, no teflon', "dir": "s6mmp15mm"}
+s1p7nt = {"size":1, "pitch":7, 'teflon':'no_teflon', 'name': '1mm SiPM, 7mm pitch, no teflon',"dir": "s1mmp7mm"}
+s1p15nt = {"size":1, "pitch":15, 'teflon':'no_teflon', 'name': '1mm SiPM, 15mm pitch, no teflon',"dir": "s1mmp15mm"}
+s3p15nt = {"size":3, "pitch":15, 'teflon':'no_teflon', 'name': '3mm SiPM, 15mm pitch, no teflon', "dir": "s3mmp15mm"}
+s6p7nt = {"size":6, "pitch":7, 'teflon':'no_teflon', 'name': '6mm SiPM, 7mm pitch, no teflon',"dir": "s6mmp7mm"}
+
 
 if local:
     outdir = '/Users/taylorcontreras/Development/Research/trackingplane/'
@@ -48,8 +54,10 @@ else:
     else:
         outdir = '/n/home12/tcontreras/plots/trackingplane/highenergy/'
         indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
-    mcs = [s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p6] #, s3p7, s3p8, s3p9, s3p10, s3p15]
     
+    mcs = [s1p1, s6p15] #s1p1, s1p7nt, s1p15nt, s3p3, s3p7nt, s3p15nt, s6p7nt, s6p16nt] #s1p1, s1p7, s1p15, s3p3, s3p7, s3p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]
+    
+
 for mc in mcs:
     if mc['dir'] == "fullcoverage":
         mc["files"] = [indir+mc['dir']+mc['extra_dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
@@ -83,11 +91,13 @@ for mc in mcs:
         pmts = pmts.append(charges)
     
 
-    mc['sipms'] = sipms
-    mc['pmts'] = pmts
-    
+    mc['sipms'] = sipms[sipms.charge>0]
+    mc['pmts'] = pmts[pmts.charge>0]
+    if mc['size'] == 6:
+        print(sipms[sipms.charge < 10000].mean)
+
 if event_type == 'kr':
-    sipm_range = (0, 350000)
+    sipm_range = (0, 400000)
     pmt_range = (0, 10000)
 else:
     sipm_range = (0, 21000000)

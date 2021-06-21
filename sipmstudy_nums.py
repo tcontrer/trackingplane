@@ -2,20 +2,26 @@
 Written by: Taylor Contreras, taylorcontreras@g.harvard.edu
 
 This script uses output from the NEXT simulation software NEXUS,
-and analyzes the time of events.
+and produces a krypton map showing the energy distribution in xy.
 """
-
 
 import pandas as pd
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
-import numpy as np
+
+from ic_functions import *
+
+def Thresh_by_Event(group, dark_count):
+    event = group.index.tolist()[0] #.event_id.max()
+    thresh = dark_count.loc[event].dark_count
+    return group[group.charge > thresh]
 
 print("Starting")
-nfiles = 20
+nfiles = 1 # fails if there are not enough events
 local = False
 event_type = 'kr'
+dark_rate = {1:80, 3: 450, 6: 1800} # SiPM size: average dark rate per sipm                                                                 
 
 # Create dictionary to hold run info
 print("Creating dictionaries")
@@ -44,7 +50,7 @@ else:
     else:
         outdir = '/n/home12/tcontreras/plots/trackingplane/highenergy/'
         indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
-    mcs = [s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p6] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                    
+    mcs = [s1p1, s1p7, s1p15, s3p3, s3p7, s3p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                    
 
 for mc in mcs:
     if mc['dir'] == "fullcoverage":
@@ -54,38 +60,23 @@ for mc in mcs:
 
 
 for mc in mcs:
-    sipm_timing = pd.DataFrame()
+
+    sipm_map = pd.DataFrame()
+    pmt_map = pd.DataFrame()
     pmt_timing = pd.DataFrame()
+    sipm_timing = pd.DataFrame()
     for file in mc['files']:
+        print('Running over: '+file+'---------------------------------')
         try:
             sns_response = pd.read_hdf(file, 'MC/sns_response')
         except:
-            print("Couldn't open file: "+file)
+            print("Couldn't open file")
             continue
         sns_positions = pd.read_hdf(file, 'MC/sns_positions')
-        sns_response_sorted = sns_response.sort_values(by=['sensor_id'])
-        sipm_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] >999]
-        sipm_response = sipm_response.loc[sipm_response["time_bin"] >0]
-        pmt_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] < 60]
-        pmt_response = pmt_response.loc[pmt_response["time_bin"] >0]
 
-        pmt_timing = pmt_timing.append(pmt_response.groupby(['event_id']).apply(lambda group: group['time_bin'].max() - group['time_bin'].min()), ignore_index=True)
-        sipm_timing = sipm_timing.append(sipm_response.groupby(['event_id']).apply(lambda group: group['time_bin'].max() - group['time_bin'].min()), ignore_index=True)
-
-    mc["pmt_times"] = np.array(pmt_timing.T.values).flatten()
-    mc['sipm_times'] = np.array(sipm_timing.T.values).flatten()
-
-print("Plotting")
-for mc in mcs:
-    plt.hist(mc["pmt_times"], bins=20)
-    plt.xlabel('Event width by PMTs [microseconds]')
-    plt.title('NEXT_100, '+mc['name'])
-    plt.savefig(outdir+'time_'+mc['name']+"_pmt.png")
-    plt.close()
-
-for mc in mcs:
-    plt.hist(mc["sipm_times"], bins=20, range=(0,30))
-    plt.xlabel('Event width by SiPMs [microseconds]')
-    plt.title('NEXT_100, '+mc['name'])
-    plt.savefig(outdir+'time_'+mc['name']+"_sipm.png")
-    plt.close()
+        # Sort to get the sipm positions
+        sns_pos_sorted = sns_positions.sort_values(by=['sensor_id'])
+        sipm_positions = sns_pos_sorted[sns_pos_sorted["sensor_name"].str.contains("SiPM")]
+        
+        print(mc['name'])
+        print('Number of sipms = '+str(len(sipm_positions.sensor_id.values)))

@@ -17,17 +17,19 @@ from fit_functions import fit_energy, plot_fit_energy, print_fit_energy, get_fit
 
 from ic_functions import *
 
-def Thresh_by_Event(group, args=dark_count):
+def Thresh_by_Event(group, dark_count):
     event = group.index.tolist()[0] #.event_id.max()
     thresh = dark_count.loc[event].dark_count
     return group[group.charge > thresh]
 
 print("Starting")
-nfiles = 99 # will fail if too few events
+nfiles = 5 # will fail if too few events
 local = False
 event_type = 'kr'
 
 tp_area = np.pi * (984./2.)**2 # mm^2
+dark_rate = {1:80, 3: 450, 6: 1800} # SiPM size: average dark rate per sipm (counts/milisecond)
+event_time = 15. # miliseconds
 
 # Create dictionary to hold run info
 print("Creating dictionaries")
@@ -56,7 +58,7 @@ else:
     else:
         outdir = '/n/home12/tcontreras/plots/trackingplane/highenergy/'
         indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
-    mcs = [s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p6] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                    
+    mcs = [s1p7, s1p15, s3p3, s3p7, s3p15] #s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                    
 
 for mc in mcs:
     if mc['dir'] == "fullcoverage":
@@ -71,6 +73,7 @@ for mc in mcs:
     sipm_timing = pd.DataFrame()
     pmt_timing = pd.DataFrame()
     for file in mc['files']:
+        print('Running over: '+file)
         try:
             sns_response = pd.read_hdf(file, 'MC/sns_response')
         except:
@@ -81,29 +84,38 @@ for mc in mcs:
 
         # Sum up all charges per event in sipms
         sipm_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] >999]
+        pmt_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] < 60]
+        #print('sipm_response before: ', sipm_response)
+        #if not sipm_response.loc[sipm_response["time_bin"] >0].empty:
+        #    sipm_response = sipm_response.loc[sipm_response["time_bin"] >0]
+        #    pmt_response = pmt_response.loc[pmt_response["time_bin"] >0]
+        #print('sipm_response after: ', sipm_response)
+
         sipm_response_byevent = sipm_response.groupby('event_id')
         charges = sipm_response_byevent.agg({"charge":"sum"})
         sipms = sipms.append(charges)
         
         # Sum up all charges per event in pmts
-        pmt_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] < 60]
         pmt_response_byevent = pmt_response.groupby('event_id')
         charges = pmt_response_byevent.agg({"charge":"sum"})
         pmts = pmts.append(charges)
 
         # Time length of events
-        pmt_timing = pmt_timing.append(pmt_response.groupby(['event_id'])\
-                    .apply(lambda group: group['time_bin'].max() - group['time_bin'].min()).to_frame())
-        sipm_timing = sipm_timing.append(sipm_response.groupby(['event_id'])\
-                    .apply(lambda group: group['time_bin'].max() - group['time_bin'].min()).to_frame())
-
+        #pmt_timing = pmt_timing.append(pmt_response.groupby(['event_id'])\
+        #            .apply(lambda group: group['time_bin'].max() - group['time_bin'].min()), ignore_index=True)
+        #sipm_timing = sipm_timing.append(sipm_response.groupby(['event_id'])\
+        #                                 .apply(lambda group: group['time_bin'].max() - group['time_bin'].min()), ignore_index=True)
+        #print('timing: ', sipm_timing)
+    
     # Threshold event based on dark noise
-    this = sipms.groupby('event_id')
-    dark_rate = 10.
-    dark_count  = sipm_timing*dark_rate
-    dark_count = dark_count.rename(columns={0:'dark_count'})
-    sipms = this.apply(Thresh_by_Event, args=(dark_count))#.set_index('event_id') #.groupby('event_id')
+    #this = sipms.groupby('event_id')
+    #dark_count  = sipm_timing*dark_rate[mc['size']]
+    #dark_count = dark_count.to_frame().rename(columns={0:'dark_count'})
+    #sipms = this.apply(Thresh_by_Event, (dark_count))#.set_index('event_id') #.groupby('event_id')
 
+    # Threshold based on dark noise
+    sipms = sipms[sipms.charge > dark_rate[mc['size']]*event_time]
+    print(sipms)
     sns_positions = pd.read_hdf(file, 'MC/sns_positions')
     sns_pos_sorted = sns_positions.sort_values(by=['sensor_id'])
     sipm_positions = sns_pos_sorted[sns_pos_sorted["sensor_name"].str.contains("SiPM")]
@@ -111,118 +123,208 @@ for mc in mcs:
     mc['coverage'] = 100. * len(sipm_positions) * mc['size']**2 / tp_area
     mc['sipms'] = sipms
     mc['pmts'] = pmts
-    mc['dark_count'] = dark_count.mean()
+    #mc['dark_count'] = dark_count.mean()
 
+mc_sizes = [[], [], []]
+for mc in mcs:
+    if mc['size'] == 1:
+        mc_sizes[0].append(mc)
+    elif mc['size'] == 3:
+        mc_sizes[1].append(mc)
+    elif mc['size'] == 6:
+        mc_sizes[2].append(mc)
     
 for mc in mcs:
     bins_fit = 50
     if event_type == 'kr':
-        fit_range_sipms = (np.min(mc['sipms'].charge), np.max(mc['sipms'].charge))
-        fit_range_pmts = (np.min(mc['pmts'].charge), np.max(mc['pmts'].charge))
+        fit_range_sipms = (np.mean(mc['sipms'].charge)-np.std(mc['sipms'].charge), np.mean(mc['sipms'].charge)+np.std(mc['sipms'].charge))
+        fit_range_pmts = (np.mean(mc['pmts'].charge)-np.std(mc['pmts'].charge), np.mean(mc['pmts'].charge)+np.std(mc['pmts'].charge))
     else:
         fit_range_sipms = (np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge)/3., np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge))
         fit_range_pmts = (np.mean(mc['pmts'].charge), np.mean(mc['pmts'].charge) + np.std(mc['pmts'].charge))
 
-    print(mc['dir']+': Average Dark count = '+str(mc['dark_count')))
+    #print(mc['dir']+': Average Dark count = '+str(mc['dark_count']))
 
     sipm_fit = fit_energy(mc['sipms'].charge, bins_fit, fit_range_sipms)
     mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'] = get_fit_params(sipm_fit)
+    print(mc['name'])
+    print('SiPMs')
     print_fit_energy(sipm_fit)
     plot_fit_energy(sipm_fit)
-    plt.savefig(outdir+'eres_'+mc['dir']+'_sipm_fit.png')
+    plt.xlabel('charge [pes]')
+    plt.title('Energy Resolution Fit, '+mc['name'])
+    plt.savefig(outdir+'eres_'+mc['name']+'_sipm_fit.png')
     plt.close()
 
     pmt_fit = fit_energy(mc['pmts'].charge, bins_fit, fit_range_pmts)
     mc['pmt_eres'], mc['pmt_fwhm'], mc['pmt_mean'] = get_fit_params(pmt_fit)
+    print('PMTs')
     print_fit_energy(pmt_fit)
     plot_fit_energy(pmt_fit)
-    plt.savefig(outdir+'eres_'+mc['dir']+'_pmt_fit.png')
+    plt.xlabel('charge [pes]')
+    plt.title('Energy Resolution Fit, '+mc['name'])
+    plt.savefig(outdir+'eres_'+mc['name']+'_pmt_fit.png')
     plt.close()
+    print('')
    
 if event_type == 'kr':
     event_str = '41.5 keV'
 else:
     event_str = r'$Q_{\beta \beta}$'
 
-pitches = [mc['pitch'] for mc in mcs]
-plt.plot(pitches, [mc['sipm_eres'] for mc in mcs], 'o')
-plt.xlabel('SiPM pitch [mm]')
-plt.ylabel(r'$E_{res}$ FWHM at '+event_str)
-plt.title('SiPM Energy Resolution')
+def to_qbb(x):
+    return x / np.sqrt(2.4)
+
+def back_tokr(x):
+    return x * np.sqrt(2.4)
+
+
+fig, ax = plt.subplots()
+for mc_size in mc_sizes:
+    if mc_size:
+        pitches = [mc['pitch'] for mc in mc_size]
+        plt.plot(pitches, [mc['sipm_eres'] for mc in mc_size], 'o', label=str(mc_size[0]['size'])+'mm SiPMs')
+secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
+#fig.subplots_adjust(right=0.2)
+ax.set_xlabel('SiPM pitch [mm]')
+ax.set_ylabel(r'$E_{res}$ FWHM at '+event_str)
+#secax.set_xlabel(r'$E_{res}$ FWHM at $Q_{\beta \beta}$')
+ax.set_title('SiPM Energy Resolution')
+plt.legend()
 plt.savefig(outdir+'eres_'+'sipm.png')
 plt.close()
 
-plt.plot(pitches, [mc['pmt_eres'] for mc in mcs], 'o')
+fig, ax = plt.subplots()
+for mc_size in mc_sizes:
+    if mc_size:
+        pitches = [mc['pitch'] for mc in mc_size]
+        plt.plot(pitches, [mc['pmt_eres'] for mc in mc_size], 'o', label=str(mc_size[0]['size'])+'mm SiPMs')
+secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
 plt.xlabel('SiPM pitch [mm]')
 plt.title('PMT Energy Resolution')
 plt.ylabel(r'$E_{res}$ FWHM at '+event_str)
+plt.legend()
 plt.savefig(outdir+'eres_'+'pmt.png')
 plt.close()
 
-plt.plot(pitches, [mc['sipm_fwhm'] for mc in mcs], 'o')
+fig, ax = plt.subplots()
+for mc_size in mc_sizes:
+    if mc_size:
+        pitches = [mc['pitch'] for mc in mc_size]
+        plt.plot(pitches, [mc['sipm_fwhm'] for mc in mc_size], 'o', label=str(mc_size[0]['size'])+'mm SiPMs')
+secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
 plt.xlabel('SiPM pitch [mm]')
 plt.ylabel('SiPM FWHM')
+plt.legend()
 plt.savefig(outdir+'eres_'+'sipm_fwhm.png')
 plt.close()
 
-plt.plot(pitches, [mc['pmt_fwhm'] for mc in mcs], 'o')
+fig, ax = plt.subplots()
+for mc_size in mc_sizes:
+    if mc_size:
+        pitches = [mc['pitch'] for mc in mc_size]
+        plt.plot(pitches, [mc['pmt_fwhm'] for mc in mc_size], 'o', label=str(mc_size[0]['size'])+'mm SiPMs')
+secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
 plt.xlabel('SiPM pitch [mm]')
 plt.ylabel('PMT FWHM')
+plt.legend()
 plt.savefig(outdir+'eres_'+'pmt_fwhm.png')
 plt.close()
 
-plt.plot(pitches, [mc['sipm_mean'] for mc in mcs], 'o')
+fig, ax = plt.subplots()
+for mc_size in mc_sizes:
+    if mc_size:
+        pitches = [mc['pitch'] for mc in mc_size]
+        plt.plot(pitches, [mc['sipm_mean'] for mc in mc_size], 'o', label=str(mc_size[0]['size'])+'mm SiPMs')
+secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
 plt.xlabel('SiPM pitch [mm]')
 plt.ylabel('SiPM Mean')
+plt.legend()
 plt.savefig(outdir+'eres_'+'sipm_mean.png')
 plt.close()
 
-plt.plot(pitches, [mc['pmt_mean'] for mc in mcs], 'o')
+fig, ax = plt.subplots()
+for mc_size in mc_sizes:
+    if mc_size:
+        pitches = [mc['pitch'] for mc in mc_size]
+        plt.plot(pitches, [mc['pmt_mean'] for mc in mc_size], 'o', label=str(mc_size[0]['size'])+'mm SiPMs')
+secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
 plt.ylabel('PMT Mean')
 plt.xlabel('SiPM pitch [mm]')
+plt.legend()
 plt.savefig(outdir+'eres_'+'pmt_mean.png')
 plt.close()
 
-
-coverages = [mc['coverage'] for mc in mcs]
-plt.plot(coverages, [mc['sipm_eres'] for mc in mcs], 'o')
+fig, ax = plt.subplots()
+for mc_size in mc_sizes:
+    if mc_size:
+        coverages = [mc['coverage'] for mc in mc_size]
+        plt.plot(coverages, [mc['sipm_eres'] for mc in mc_size], 'o', label=str(mc_size[0]['size'])+'mm SiPMs')
+secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
 plt.xlabel('Tracking Plane Coverage %')
 plt.ylabel(r'$E_{res}$ FWHM at '+event_str)
 plt.title('SiPM Energy Resolution')
+plt.legend()
 plt.savefig(outdir+'eres_coverage'+'sipm.png')
 plt.close()
 
-plt.plot(coverages, [mc['pmt_eres'] for mc in mcs], 'o')
+fig, ax = plt.subplots()
+for mc_size in mc_sizes:
+    if mc_size:
+        coverages = [mc['coverage'] for mc in mc_size]
+        plt.plot(coverages, [mc['pmt_eres'] for mc in mc_size], 'o', label=str(mc_size[0]['size'])+'mm SiPMs')
+secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
 plt.xlabel('Tracking Plane Coverage [mm]')
+plt.legend()
 plt.title('PMT Energy Resolution')
 plt.ylabel(r'$E_{res}$ FWHM at '+event_str)
 plt.savefig(outdir+'eres_coverage'+'pmt.png')
 plt.close()
 
-plt.plot(coverages, [mc['sipm_fwhm'] for mc in mcs], 'o')
+fig, ax = plt.subplots()
+for mc_size in mc_sizes:
+    if mc_size:
+        coverages = [mc['coverage'] for mc in mc_size]
+        plt.plot(coverages, [mc['sipm_fwhm'] for mc in mc_size], 'o', label=str(mc_size[0]['size'])+'mm SiPMs')
+secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
 plt.xlabel('Tracking Plane Coverage %')
 plt.ylabel('SiPM FWHM')
+plt.legend()
 plt.savefig(outdir+'eres_coverage'+'sipm_fwhm.png')
 plt.close()
 
-plt.plot(coverages, [mc['pmt_fwhm'] for mc in mcs], 'o')
+fig, ax = plt.subplots()
+for mc_size in mc_sizes:
+    if mc_size:
+        coverages = [mc['coverage'] for mc in mc_size]
+        plt.plot(coverages, [mc['pmt_fwhm'] for mc in mc_size], 'o', label=str(mc_size[0]['size'])+'mm SiPMs')
+secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
 plt.xlabel('Tracking Plane Coverage %')
 plt.ylabel('PMT FWHM')
+plt.legend()
 plt.savefig(outdir+'eres_coverage'+'pmt_fwhm.png')
 plt.close()
 
-plt.plot(coverages, [mc['sipm_mean'] for mc in mcs], 'o')
+fig, ax = plt.subplots()
+for mc_size in mc_sizes:
+    if mc_size:
+        coverages = [mc['coverage'] for mc in mc_size]
+        plt.plot(coverages, [mc['sipm_mean'] for mc in mc_size], 'o', label=str(mc_size[0]['size'])+'mm SiPMs')
+secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
 plt.xlabel('Tracking Plane Coverage %')
 plt.ylabel('SiPM Mean')
+plt.legend()
 plt.savefig(outdir+'eres_coverage'+'sipm_mean.png')
 plt.close()
 
-plt.plot(coverages, [mc['pmt_mean'] for mc in mcs], 'o')
+fig, ax = plt.subplots()
+for mc_size in mc_sizes:
+    if mc_size:
+        coverages = [mc['coverage'] for mc in mc_size]
+        plt.plot(coverages, [mc['pmt_mean'] for mc in mc_size], 'o', label=str(mc_size[0]['size'])+'mm SiPMs')
+secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
 plt.ylabel('PMT Mean')
 plt.xlabel('Tracking Plane Coverage %')
+plt.legend()
 plt.savefig(outdir+'eres_coverage'+'pmt_mean.png')
 plt.close()
-
-
-                                       
-

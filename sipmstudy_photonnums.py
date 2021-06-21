@@ -13,9 +13,10 @@ import matplotlib.pyplot as plt
 
 
 print("Starting")
-nfiles = 10 # will fail if too few events
+nfiles = 100 # will fail if too few events
 local = False
 event_type = 'kr'
+num_sipms = 5
 
 # Create dictionary to hold run info
 print("Creating dictionaries")
@@ -27,7 +28,7 @@ s3p6 = {"size":3, "pitch":6, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 6mm p
 s3p7 = {"size":3, "pitch":7, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 7mm pitch',"dir": "s3mmp7mm"}
 s3p8 = {"size":3, "pitch":8, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 8mm pitch',"dir": "s3mmp8mm"}
 s3p9 = {"size":3, "pitch":9, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 9mm pitch',"dir": "s3mmp9mm"}
-s3p10 = {"size":3, "pitch":10, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 10mm pitch',"dir": "s3mmp9mm"}
+s3p10 = {"size":3, "pitch":10, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 10mm pitch',"dir": "s3mmp10mm"}
 s3p15 = {"size":3, "pitch":15, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 15mm pitch', "dir": "s3mmp15mm"}
 s6p6 = {"size":6, "pitch":6,'teflon':'no_teflon', 'name':'6mm SiPM, full coverage', "dir":"fullcoverage", 'extra_dir':'/s6mmp6mm'}
 s6p7 = {"size":6, "pitch":7, 'teflon':'teflonhole_5mm', 'name': '6mm SiPM, 7mm pitch',"dir": "s6mmp7mm"}
@@ -44,7 +45,7 @@ else:
     else:
         outdir = '/n/home12/tcontreras/plots/trackingplane/highenergy/'
         indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
-    mcs = [s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p6] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                    
+    mcs = [s1p1, s6p15] #s1p7, s1p15, s3p3, s3p7, s3p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                    
 
 for mc in mcs:
     if mc['dir'] == "fullcoverage":
@@ -54,9 +55,11 @@ for mc in mcs:
 
 
 for mc in mcs:
-
+    this_num_sipms = num_sipms
     top_sipms = pd.DataFrame()
     for file in mc['files']:
+        
+        print('Running: '+file)
         try:
             sns_response = pd.read_hdf(file, 'MC/sns_response')
         except:
@@ -67,28 +70,62 @@ for mc in mcs:
         sns_response_sorted = sns_response.sort_values(by=['sensor_id'])
         sipm_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] >999]
 
-        top_10_sipms = sipm_response.groupby('event_id',as_index=False).apply(lambda grp: grp.nlargest(10,'charge'))
-        top_sipms_by_event = top_10_sipms.groupby('event_id')
+        #sipm_response_byevent = sipm_response.groupby('event_id',as_index=False)
+        #num_sipms_byevent = sipm_response.groupby('event_id',as_index=False).apply(lambda grp: len(grp.sensor_id.values))
+        #this_num_sipms = min(num_sipms_byevent.min(), this_num_sipms)
+        #these_top_sipms = sipm_response_byevent.apply(lambda grp: grp.nlargest(this_num_sipms,'charge'))
+        
+        sipm_response_byevent = sipm_response.groupby('event_id',as_index=False)
+        num_sipms_byevent = sipm_response.groupby('event_id').apply(lambda grp: len(grp.sensor_id.values))
+        events_with_enough_sipms = num_sipms_byevent[num_sipms_byevent.values >= num_sipms].index
+        sipm_response = sipm_response[sipm_response.event_id.isin(events_with_enough_sipms)]
+        sipm_response_byevent =sipm_response.groupby('event_id',as_index=False)
+        these_top_sipms = sipm_response_byevent.apply(lambda grp: grp.nlargest(this_num_sipms,'charge')) 
 
-    mc["top_sipms"] = [top_sipms_by_event.apply(lambda grp: grp.iloc[i]) for i in range(0,10)]
+        top_sipms = top_sipms.append(these_top_sipms)
 
+    mc['top_sipms'] = top_sipms
+    mc['num_sipms'] = this_num_sipms
+        
 print("Plotting")
 # Plot each i-th sipm for each mc
+mcs_by_size = [[], [], []]
 for mc in mcs:
-    print('')
-    print(mc['top_sipms'][0]['charge'])
-    print(mc['top_sipms'])
-    for i in range(0,10):
-        plt.hist(mc['top_sipms'][i]['charge'])
+    if mc['size'] == 1:
+        mcs_by_size[0].append(mc)
+    elif mc['size'] == 3:
+        mcs_by_size[1].append(mc)
+    elif mc['size'] == 6:
+        mcs_by_size[2].append(mc)
+print(mcs_by_size)
+for mc in mcs:
+    for i in range(0,mc['num_sipms']):
+        plt.hist(mc['top_sipms'].groupby('event_id').apply(lambda grp: grp.iloc[i]).charge)
         plt.xlabel('charge [pes]')
-        plt.title('NEXT-100, '+mc['name']+', '+str(i)+' largest sipm signal per event')
-        plt.savefig(outdir+'photonnums_'+mc['name']+"_"+str(i)+"largest_sipm.png")
+        plt.title('NEXT-100, '+mc['name']+', '+str(i+1)+' largest sipm signal per event')
+        plt.savefig(outdir+'photonnums_'+mc['name']+"_"+str(i+1)+"largest_sipm.png")
         plt.close()
 
 # Plot top 5 sipms for each mc
 for mc in mcs:
-    for i in range(0,5):
-        plt.hist(mc['top_sipms'][i]['charge'], alpha=0.5, label=str(i))
+    
+    if event_type == 'kr':
+        if mc['size'] == 1:
+            r = (0, 50)
+        elif mc['size'] == 3:
+            r = (0,500)
+        elif mc['size'] == 6:
+            r = (0, 2300)
+    else:
+        if mc['size'] == 1:
+            r = (0, 400)
+        elif mc['size'] == 3:
+            r = (0,7000)
+        elif mc['size'] == 6:
+            r = (0, 7000)
+
+    for i in range(0,mc['num_sipms']):
+        plt.hist(mc['top_sipms'].groupby('event_id').apply(lambda grp: grp.iloc[i]).charge, alpha=0.5, label=str(i+1), bins=50, range=r)
     plt.xlabel('charge [pes]')
     plt.title('NEXT-100, '+mc['name'])
     plt.legend()
@@ -96,11 +133,37 @@ for mc in mcs:
     plt.close()
 
 # Plot top i-th sipm across mcs
-for i in range(0,10):
-    for mc in mcs:
-        plt.hist(mc['top_sipms'][i]['charge'], alpha=0.5, label=mc['name'])
-    plt.xlabel('charge [pes]')
-    plt.title('NEXT-100,'+str(i)+" largest sipm signal per event")
-    plt.legend()
-    plt.savefig(outdir+'photonnums_'++str(i)+"largest_sipm_comp.png")
-    plt.close()
+for mc_size in mcs_by_size:
+    print('Running over size: ', mc_size)
+    #sizes = [mc['num_sipms'] for mc in mc_size]
+    #sizes.append(num_sipms)
+    #num_sipms = min(sizes)
+
+    if not mc_size:
+        continue
+    for i in range(0, num_sipms):
+        print('Running over sipm: ', i)
+        for mc in mc_size:
+            print('Running over mc: ', mc)
+            
+            if event_type == 'kr':
+                if mc['size'] == 1:
+                    r = (0, 50)
+                elif mc['size'] == 3:
+                    r = (0,500)
+                elif mc['size'] == 6:
+                    r = (0, 2300)
+            else:
+                if mc['size'] == 1:
+                    r = (0, 400)
+                elif mc['size'] == 3:
+                    r = (0,7000)
+                elif mc['size'] == 6:
+                    r = (0, 2300)
+
+            plt.hist(mc['top_sipms'].groupby('event_id').apply(lambda grp: grp.iloc[i]).charge, alpha=0.5, label=mc['name'], bins = 50, range=r)
+        plt.xlabel('charge [pes]')
+        plt.title('NEXT-100, '+str(mc['size'])+'mm SiPMs, '+str(i)+" largest sipm signal per event")
+        plt.legend()
+        plt.savefig(outdir+'photonnums_'+str(mc['size'])+'sipm_'+str(i)+"largest_sipm_comp.png")
+        plt.close()

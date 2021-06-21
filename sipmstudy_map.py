@@ -12,15 +12,16 @@ import matplotlib.pyplot as plt
 
 from ic_functions import *
 
-def Thresh_by_Event(group, args=dark_count):
+def Thresh_by_Event(group, dark_count):
     event = group.index.tolist()[0] #.event_id.max()
     thresh = dark_count.loc[event].dark_count
     return group[group.charge > thresh]
 
 print("Starting")
-nfiles = 99 # fails if there are not enough events
+nfiles = 100 # fails if there are not enough events
 local = False
 event_type = 'kr'
+dark_rate = {1:80, 3: 450, 6: 1800} # SiPM size: average dark rate per sipm                                                                 
 
 # Create dictionary to hold run info
 print("Creating dictionaries")
@@ -49,7 +50,7 @@ else:
     else:
         outdir = '/n/home12/tcontreras/plots/trackingplane/highenergy/'
         indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
-    mcs = [s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p6] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                    
+    mcs = [s1p1, s1p7, s1p15, s3p3, s3p7, s3p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                    
 
 for mc in mcs:
     if mc['dir'] == "fullcoverage":
@@ -61,12 +62,15 @@ for mc in mcs:
 for mc in mcs:
 
     sipm_map = pd.DataFrame()
-    pmt_pmt = pd.DataFrame()
+    pmt_map = pd.DataFrame()
+    pmt_timing = pd.DataFrame()
+    sipm_timing = pd.DataFrame()
     for file in mc['files']:
+        print('Running over: '+file+'---------------------------------')
         try:
             sns_response = pd.read_hdf(file, 'MC/sns_response')
         except:
-            print("Couldn't open file: "+file)
+            print("Couldn't open file")
             continue
         sns_positions = pd.read_hdf(file, 'MC/sns_positions')
 
@@ -78,15 +82,15 @@ for mc in mcs:
         sns_response_sorted = sns_response.sort_values(by=['sensor_id'])
         sipm_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] >999]
         pmt_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] < 60]
-        sipm_response = sipm_response.loc[sipm_response["time_bin"] >0]
-        pmt_response = pmt_response.loc[pmt_response["time_bin"] >0]
+        #if not sipm_response.loc[sipm_response["time_bin"] >0].empty:
+        #    sipm_response = sipm_response.loc[sipm_response["time_bin"] >0]
+        #    pmt_response = pmt_response.loc[pmt_response["time_bin"] >0]
 
         # Time length of events
-        pmt_timing = pmt_timing.append(pmt_response.groupby(['event_id'])\
-                        .apply(lambda group: group['time_bin'].max() - group['time_bin'].min()).to_frame())
-        sipm_timing = sipm_timing.append(sipm_response.groupby(['event_id'])\
-                        .apply(lambda group: group['time_bin'].max() - group['time_bin'].min()).to_frame())
-
+        #pmt_timing = pmt_response.groupby(['event_id'])\
+        #                        .apply(lambda group: group['time_bin'].max() - group['time_bin'].min())
+        #sipm_timing = sipm_response.groupby(['event_id'])\
+        #                        .apply(lambda group: group['time_bin'].max() - group['time_bin'].min())
 
         # Summed pmt energy per event
         response_perevent_pmt = pmt_response.groupby('event_id')
@@ -95,15 +99,15 @@ for mc in mcs:
         # Summed sipm energy per event
         response_perevent_sipm = sipm_response.groupby('event_id')
         summed_charges_byevent_sipm = response_perevent_sipm.agg({"charge":"sum"})
-
-        sipm_response = sipm_response.loc[sipm_response["time_bin"] >0]
-        pmt_response = pmt_response.loc[pmt_response["time_bin"] >0]
-
-        dark_rate = 10.
-        dark_count  = sipm_timing*dark_rate
-        dark_count = dark_count.rename(columns={0:'dark_count'})
-        this = summed_charges_byevent_sipm.groupby('event_id')
-        summed_charged_byevent_sipm = this.apply(Thresh_by_Event, args=(dark_count))#.set_index('event_id') #.groupby('event_id')
+        #print('sipm_response: ', sipm_response)
+        #print('timing: ', sipm_timing)
+        # Threshold event above estimated dark count in event
+        #dark_count  = sipm_timing*dark_rate[mc['size']]
+        #print('dark_count: ', dark_count)
+        #print(dark_count.to_frame().rename(columns={0:'dark_count'}))
+        #dark_count = dark_count.to_frame().rename(columns={0:'dark_count'})
+        #this = summed_charges_byevent_sipm.groupby('event_id')
+        #summed_charged_byevent_sipm = this.apply(Thresh_by_Event, (dark_count))#.set_index('event_id') #.groupby('event_id')
 
 
         # Position of the event(sipm with the max charge)
@@ -113,6 +117,9 @@ for mc in mcs:
         new_max_sipm_positions = sipm_positions.set_index('sensor_id')
         this = new_max_sipm_positions.loc[max_sipms.index.values.tolist()]
         event_map = pd.concat([max_sipms.loc[:,'event_id'],this.loc[:,['x','y','z']]], axis=1).set_index('event_id').sort_values(by='event_id') 
+
+        print('event map:', event_map[event_map.duplicated()])
+        print('sumed charges: ', summed_charges_byevent_sipm[summed_charges_byevent_sipm.duplicated()])
         
         pmt_map = pmt_map.append(pd.concat([summed_charges_byevent_pmt,event_map],axis=1))
         sipm_map = sipm_map.append(pd.concat([summed_charges_byevent_sipm,event_map],axis=1))
@@ -123,11 +130,11 @@ for mc in mcs:
 nbins = 500//10
 for mc in mcs:
     h = hist2d(mc['sipm_map'].x, mc['sipm_map'].y, (nbins, nbins), weights = mc['sipm_map'].charge)
-    labels("X [mm]", "Y [mm]", "SiPMs Light Distribution \n (NEXT-100, 6mm sipms, 10mm pitch)")
+    labels("X [mm]", "Y [mm]", "SiPMs Light Distribution \n (NEXT-100, "+mc['name']+")")
     plt.savefig(outdir+'map_sipm_'+mc['name']+event_type+'.png')
     plt.close()
 
     h2 = hist2d(mc['pmt_map'].x, mc['pmt_map'].y, (nbins, nbins), weights = mc['pmt_map'].charge)
-    labels("X [mm]", "Y [mm]", "PMTs Light Distribution \n (NEXT-100)")
+    labels("X [mm]", "Y [mm]", "PMTs Light Distribution \n (NEXT-100, "+mc['name']+")")
     plt.savefig(outdir+'map_pmt_'+mc['name']+event_type+'.png')
     plt.close()
