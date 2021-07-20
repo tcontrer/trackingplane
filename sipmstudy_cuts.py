@@ -17,7 +17,7 @@ from ic_functions import *
 print("Starting")
 nfiles = 10 # will fail if too few events
 local = False
-event_type = 'qbb'
+event_type = 'kr'
 
 # Create dictionary to hold run info
 print("Creating dictionaries")
@@ -57,7 +57,7 @@ for mc in mcs:
 cuts = [i*10 for i in range(0,200)]
 for mc in mcs:
     sipm_response = pd.DataFrame()
-    eff = {cut:pd.DataFrame() for cut in cuts}
+    #eff = {cut:pd.DataFrame() for cut in cuts}
     for file in mc['files']:
         print('Running over: '+file)
         try:
@@ -70,18 +70,17 @@ for mc in mcs:
 
         # Sum up all charges per event in sipms
         sipm_response = sipm_response.append(sns_response_sorted.loc[sns_response_sorted["sensor_id"] >999])
-        this = sipm_response.groupby('event_id')
-        total_charges = this.agg({"charge":"sum"})
-
-        for cut in cuts:
-            cut_sipm_response = sipm_response[sipm_response.charge > cut]
-            this = cut_sipm_response.groupby('event_id')
-            charges = this.agg({"charge":"sum"})
-            eff[cut] = eff[cut].append(charges/total_charges)
-            
+        
+    this = sipm_response.groupby('event_id')
+    total_charges = this.agg({"charge":"sum"})
+    
     efficiencies = []
     for cut in cuts:
-        efficiencies.append(eff[cut].charge.mean())# Calculate efficiencies based on threshold cut
+        cut_sipm_response = sipm_response[sipm_response.charge > cut]
+        this = cut_sipm_response.groupby('event_id')
+        charges = this.agg({"charge":"sum"})
+        efficiencies.append(charges/total_charges)
+        #efficiencies.append(eff[cut].charge.mean())# Calculate efficiencies based on threshold cut
     
     mc['eff'] = efficiencies
     #mc['sipms'] = sipm_response
@@ -90,32 +89,51 @@ if event_type == 'kr':
     event_str = '41.5 keV'
 else:
     event_str = r'$Q_{\beta \beta}$'
-"""
-for mc in mcs:
-    plt.hist(mc['sipms'].groupby('event_id').apply(lambda grp: grp.groupby('sensor_id').agg({'charge':'sum'})).charge, label=mc['name'])
-plt.title('Signal per SiPM per event')
-plt.xlabel('charge [pes]')
-plt.legend()
-plt.savefig(outdir+'cuts_charge.png')
-plt.close()
 
 for mc in mcs:
     plt.hist(mc['sipms'].groupby('event_id').apply(lambda grp: grp.groupby('sensor_id').agg({'charge':'sum'})).charge)
     plt.title('Signal per SiPM per event')
     plt.xlabel('charge [pes]')
-    plt.savefig(outdir+'cuts_charge_'+mc['name']+'.png')
+    plt.savefig(outdir+'cuts_charge.png')
     plt.close()
-"""
+
+
 mcs_by_size = [[], [], []]
 for mc in mcs:
+    r = (0,100)
+    b = 100
     if mc['size'] == 1:
         mcs_by_size[0].append(mc)
+        mc['r'] = (0,20)
+        mc['b'] = 20
     elif mc['size'] == 3:
         mcs_by_size[1].append(mc)
+        mc['r'] = (0,100)
+        mc['b'] = 100
     elif mc['size'] == 6:
         mcs_by_size[2].append(mc)
+        mc['r'] = (0,500)
+        mc['b'] = 500
+
 for mcs in mcs_by_size:
+
     for mc in mcs:
+        plt.hist(mc['sipms'].groupby('event_id').apply(lambda grp: grp.groupby('sensor_id').agg({'charge':'sum'})).charge, bins=mc['b'], range=mc['r'])
+        plt.title('Signal per SiPM per event')
+        plt.xlabel('charge [pes]')
+        plt.savefig(outdir+'cuts_charge_'+mc['name']+'.png')
+        plt.close()
+
+    for mc in mcs:
+        plt.hist(mc['sipms'].groupby('event_id').apply(lambda grp: grp.groupby('sensor_id').agg({'charge':'sum'})).charge, bins=mc['b'], range=mc['r'], lable=mc['name'])
+    plt.title('Signal per SiPM per event')
+    plt.xlabel('charge [pes]')
+    plt.legend()
+    plt.savefig(outdir+'cuts_charge'+str(mc['size'])+'.png')
+    plt.close()
+
+    for mc in mcs:
+        print(mc['name']+' eff: ', mc['eff'])
         plt.plot(cuts, mc['eff'], 'o', label=mc['name'])
     plt.xlabel('SiPM signal threshold [pes]')
     plt.ylabel('Signal after threshold / total signal')
