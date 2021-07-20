@@ -23,13 +23,16 @@ def Thresh_by_Event(group, dark_count):
     return group[group.charge > thresh]
 
 print("Starting")
-nfiles = 5 # will fail if too few events
+nfiles = 1000 # will fail if too few events
 local = False
-event_type = 'kr'
+event_type = 'qbb'
 
 tp_area = np.pi * (984./2.)**2 # mm^2
-dark_rate = {1:80, 3: 450, 6: 1800} # SiPM size: average dark rate per sipm (counts/milisecond)
-event_time = 15. # miliseconds
+dark_rate = {1:80./1000., 3: 450./1000., 6: 1800./1000.} # SiPM size: average dark rate per sipm (counts/microsecond)
+if event_type == 'kr':
+    event_time = 20. # microseconds
+else:
+    event_time = 100. # microseconds
 
 # Create dictionary to hold run info
 print("Creating dictionaries")
@@ -58,7 +61,7 @@ else:
     else:
         outdir = '/n/home12/tcontreras/plots/trackingplane/highenergy/'
         indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
-    mcs = [s1p7, s1p15, s3p3, s3p7, s3p15] #s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                    
+    mcs = [s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p6, s6p15] #s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                    
 
 for mc in mcs:
     if mc['dir'] == "fullcoverage":
@@ -92,8 +95,10 @@ for mc in mcs:
         #print('sipm_response after: ', sipm_response)
 
         sipm_response_byevent = sipm_response.groupby('event_id')
+        #sum_sipms_byevent = sipm_response_byevent.apply(lambda group: group.groupby('sensor_id').agg({"charge":"sum"})).groupby('event_id')
+        #above_thresh_sipms = sum_sipms_byevent.apply(lambda group: group[group.charge > dark_rate[mc['size']]*event_time])
         charges = sipm_response_byevent.agg({"charge":"sum"})
-        sipms = sipms.append(charges)
+        sipms = sipms.append(charges, ignore_index=True)
         
         # Sum up all charges per event in pmts
         pmt_response_byevent = pmt_response.groupby('event_id')
@@ -114,7 +119,7 @@ for mc in mcs:
     #sipms = this.apply(Thresh_by_Event, (dark_count))#.set_index('event_id') #.groupby('event_id')
 
     # Threshold based on dark noise
-    sipms = sipms[sipms.charge > dark_rate[mc['size']]*event_time]
+    #sipms = sipms[sipms.charge > dark_rate[mc['size']]*event_time]
     print(sipms)
     sns_positions = pd.read_hdf(file, 'MC/sns_positions')
     sns_pos_sorted = sns_positions.sort_values(by=['sensor_id'])
@@ -140,7 +145,7 @@ for mc in mcs:
         fit_range_sipms = (np.mean(mc['sipms'].charge)-np.std(mc['sipms'].charge), np.mean(mc['sipms'].charge)+np.std(mc['sipms'].charge))
         fit_range_pmts = (np.mean(mc['pmts'].charge)-np.std(mc['pmts'].charge), np.mean(mc['pmts'].charge)+np.std(mc['pmts'].charge))
     else:
-        fit_range_sipms = (np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge)/3., np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge))
+        fit_range_sipms = (np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge)/2., np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge))
         fit_range_pmts = (np.mean(mc['pmts'].charge), np.mean(mc['pmts'].charge) + np.std(mc['pmts'].charge))
 
     #print(mc['dir']+': Average Dark count = '+str(mc['dark_count']))

@@ -18,14 +18,10 @@ def Thresh_by_Event(group, dark_count):
     return group[group.charge > thresh]
 
 print("Starting")
-nfiles = 50 # fails if there are not enough events
+nfiles = 100 # fails if there are not enough events
 local = False
-event_type = 'qbb'
-dark_rate = {1:80./1000., 3: 450./1000., 6: 1800./1000.} # SiPM size: average dark rate per sipm (counts/microsecond)          
-if event_type == 'kr':
-    event_time = 15. # microseconds                                                                                            
-else:
-    event_time = 200. # microseconds                                                                                                
+event_type = 'kr'
+dark_rate = {1:80, 3: 450, 6: 1800} # SiPM size: average dark rate per sipm                                                                 
 
 # Create dictionary to hold run info
 print("Creating dictionaries")
@@ -103,14 +99,6 @@ for mc in mcs:
         # Summed sipm energy per event
         response_perevent_sipm = sipm_response.groupby('event_id')
         summed_charges_byevent_sipm = response_perevent_sipm.agg({"charge":"sum"})
-
-        # Estimated dark count
-        print('Before: ', summed_charges_byevent_sipm)
-        dark_count = dark_rate[mc['size']]*event_time
-        summed_charges_byevent_sipm = summed_charges_byevent_sipm[summed_charges_byevent_sipm.charge > dark_count]
-        print('Dark count: ', dark_count)
-        print('After: ', summed_charges_byevent_sipm)
-
         #print('sipm_response: ', sipm_response)
         #print('timing: ', sipm_timing)
         # Threshold event above estimated dark count in event

@@ -13,9 +13,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 print("Starting")
-nfiles = 20
+nfiles = 500
 local = False
-event_type = 'kr'
+event_type = 'qbb'
 
 # Create dictionary to hold run info
 print("Creating dictionaries")
@@ -44,7 +44,7 @@ else:
     else:
         outdir = '/n/home12/tcontreras/plots/trackingplane/highenergy/'
         indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
-    mcs = [s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p6] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                    
+    mcs = [s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p6, s6p15] #s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p6] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                    
 
 for mc in mcs:
     if mc['dir'] == "fullcoverage":
@@ -75,6 +75,11 @@ for mc in mcs:
     mc["pmt_times"] = np.array(pmt_timing.T.values).flatten()
     mc['sipm_times'] = np.array(sipm_timing.T.values).flatten()
 
+if event_type == 'kr':
+    time_range = (0,50)
+else:
+    time_range = (0, 250)
+
 print("Plotting")
 for mc in mcs:
     plt.hist(mc["pmt_times"], bins=20)
@@ -84,7 +89,7 @@ for mc in mcs:
     plt.close()
 
 for mc in mcs:
-    plt.hist(mc["sipm_times"], bins=20, range=(0,30))
+    plt.hist(mc["sipm_times"], bins=20, range=time_range)
     plt.xlabel('Event width by SiPMs [microseconds]')
     plt.title('NEXT_100, '+mc['name'])
     plt.savefig(outdir+'time_'+mc['name']+"_sipm.png")

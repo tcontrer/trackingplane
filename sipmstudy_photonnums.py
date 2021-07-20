@@ -13,9 +13,9 @@ import matplotlib.pyplot as plt
 
 
 print("Starting")
-nfiles = 100 # will fail if too few events
+nfiles = 1000 # will fail if too few events
 local = False
-event_type = 'kr'
+event_type = 'qbb'
 num_sipms = 5
 
 # Create dictionary to hold run info
@@ -45,7 +45,7 @@ else:
     else:
         outdir = '/n/home12/tcontreras/plots/trackingplane/highenergy/'
         indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
-    mcs = [s1p1, s6p15] #s1p7, s1p15, s3p3, s3p7, s3p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                    
+    mcs = [s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p6, s6p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                    
 
 for mc in mcs:
     if mc['dir'] == "fullcoverage":
@@ -159,7 +159,7 @@ for mc_size in mcs_by_size:
                 elif mc['size'] == 3:
                     r = (0,7000)
                 elif mc['size'] == 6:
-                    r = (0, 2300)
+                    r = (0, 22500)
 
             plt.hist(mc['top_sipms'].groupby('event_id').apply(lambda grp: grp.iloc[i]).charge, alpha=0.5, label=mc['name'], bins = 50, range=r)
         plt.xlabel('charge [pes]')

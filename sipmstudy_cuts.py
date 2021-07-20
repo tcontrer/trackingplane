@@ -2,7 +2,7 @@
 Written by: Taylor Contreras, taylorcontreras@g.harvard.edu
 
 This script uses output from the NEXT simulation software NEXUS,
-and analyzes the energy distribution of each simulated 
+and analyzes the energy resolution of the simulations
 detector configuration.
 """
 
@@ -11,15 +11,13 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import curve_fit
-from scipy.stats import norm
 
 from ic_functions import *
 
 print("Starting")
-nfiles = 100 # will fail if too few events
+nfiles = 10 # will fail if too few events
 local = False
-event_type = 'kr'
+event_type = 'qbb'
 
 # Create dictionary to hold run info
 print("Creating dictionaries")
@@ -36,12 +34,6 @@ s3p15 = {"size":3, "pitch":15, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 15m
 s6p6 = {"size":6, "pitch":6,'teflon':'no_teflon', 'name':'6mm SiPM, full coverage', "dir":"fullcoverage", 'extra_dir':'/s6mmp6mm'}
 s6p7 = {"size":6, "pitch":7, 'teflon':'teflonhole_5mm', 'name': '6mm SiPM, 7mm pitch',"dir": "s6mmp7mm"}
 s6p15 = {"size":6, "pitch":15, 'teflon':'teflonhole_8mm', 'name': '6mm SiPM, 15mm pitch', "dir": "s6mmp15mm"}
-s6p15nt = {"size":6, "pitch":15, 'teflon':'no_teflon', 'name': '6mm SiPM, 15mm pitch, no teflon', "dir": "s6mmp15mm"}
-s1p7nt = {"size":1, "pitch":7, 'teflon':'no_teflon', 'name': '1mm SiPM, 7mm pitch, no teflon',"dir": "s1mmp7mm"}
-s1p15nt = {"size":1, "pitch":15, 'teflon':'no_teflon', 'name': '1mm SiPM, 15mm pitch, no teflon',"dir": "s1mmp15mm"}
-s3p15nt = {"size":3, "pitch":15, 'teflon':'no_teflon', 'name': '3mm SiPM, 15mm pitch, no teflon', "dir": "s3mmp15mm"}
-s6p7nt = {"size":6, "pitch":7, 'teflon':'no_teflon', 'name': '6mm SiPM, 7mm pitch, no teflon',"dir": "s6mmp7mm"}
-
 
 if local:
     outdir = '/Users/taylorcontreras/Development/Research/trackingplane/'
@@ -50,26 +42,24 @@ if local:
 else:
     if event_type == 'kr':
         outdir = '/n/home12/tcontreras/plots/trackingplane/krypton/'
-        indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/" 
+        indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/"
     else:
         outdir = '/n/home12/tcontreras/plots/trackingplane/highenergy/'
         indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
-    
-    mcs = [s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p6, s6p15] #s1p1, s1p7nt, s1p15nt, s3p3, s3p7nt, s3p15nt, s6p7nt, s6p16nt] #s1p1, s1p7, s1p15, s3p3, s3p7, s3p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]
-    
+    mcs = [s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p6, s6p15] #s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                    
 
 for mc in mcs:
     if mc['dir'] == "fullcoverage":
         mc["files"] = [indir+mc['dir']+mc['extra_dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
     else:
         mc["files"] = [indir+mc['teflon']+'/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
-    
-    
+
+cuts = [i*10 for i in range(0,200)]
 for mc in mcs:
-    
-    sipms = pd.DataFrame()
-    pmts = pd.DataFrame()
+    sipm_response = pd.DataFrame()
+    eff = {cut:pd.DataFrame() for cut in cuts}
     for file in mc['files']:
+        print('Running over: '+file)
         try:
             sns_response = pd.read_hdf(file, 'MC/sns_response')
         except:
@@ -79,60 +69,65 @@ for mc in mcs:
         sns_response_sorted = sns_response.sort_values(by=['sensor_id'])
 
         # Sum up all charges per event in sipms
-        sipm_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] >999]
-        sipm_response_byevent = sipm_response.groupby('event_id')
-        charges = sipm_response_byevent.agg({"charge":"sum"})
-        sipms = sipms.append(charges)
-        
-        # Sum up all charges per event in pmts
-        pmt_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] < 60]
-        pmt_response_byevent = pmt_response.groupby('event_id')
-        charges = pmt_response_byevent.agg({"charge":"sum"})
-        pmts = pmts.append(charges)
+        sipm_response = sipm_response.append(sns_response_sorted.loc[sns_response_sorted["sensor_id"] >999])
+        this = sipm_response.groupby('event_id')
+        total_charges = this.agg({"charge":"sum"})
+
+        for cut in cuts:
+            cut_sipm_response = sipm_response[sipm_response.charge > cut]
+            this = cut_sipm_response.groupby('event_id')
+            charges = this.agg({"charge":"sum"})
+            eff[cut] = eff[cut].append(charges/total_charges)
+            
+    efficiencies = []
+    for cut in cuts:
+        efficiencies.append(eff[cut].charge.mean())# Calculate efficiencies based on threshold cut
     
-
-    mc['sipms'] = sipms[sipms.charge>0]
-    mc['pmts'] = pmts[pmts.charge>0]
-    if mc['size'] == 6:
-        print(sipms[sipms.charge < 10000].mean)
-
+    mc['eff'] = efficiencies
+    #mc['sipms'] = sipm_response
+    
 if event_type == 'kr':
-    sipm_range = (0, 400000)
-    pmt_range = (0, 10000)
+    event_str = '41.5 keV'
 else:
-    sipm_range = (0, 21000000)
-    pmt_range = (0, 600000)
-    
-    
+    event_str = r'$Q_{\beta \beta}$'
+"""
 for mc in mcs:
-    plt.hist(mc['sipms'].charge, label='sipms', bins=100)
-    plt.xlabel("Charge per event in SiPMS [pes]")
-    plt.title("NEXT-100, "+mc['name'])
-    plt.legend()
-    plt.savefig(outdir+'distr_'+'sipms_energy_'+mc['dir']+str(mc['size'])+'.png')
-    plt.close()
-
-for mc in mcs:
-    plt.hist(mc['pmts'].charge, label='pmts', bins=100)
-    plt.xlabel("Charge per event in PMTs [pes]")
-    plt.title("NEXT-100, "+mc['name'])
-    plt.legend()
-    plt.savefig(outdir+'distr_'+'pmts_energy_'+mc['dir']+str(mc['size'])+'.png')
-    plt.close()
-    
-for mc in mcs:
-    plt.hist(mc['sipms'].charge, label=mc['name'], bins=100, range=sipm_range)
-plt.xlabel("Charge per event in SiPMs [pes]")
-plt.title("NEXT-100")
+    plt.hist(mc['sipms'].groupby('event_id').apply(lambda grp: grp.groupby('sensor_id').agg({'charge':'sum'})).charge, label=mc['name'])
+plt.title('Signal per SiPM per event')
+plt.xlabel('charge [pes]')
 plt.legend()
-plt.savefig(outdir+'distr_'+'sipm_energy_comp.png')
+plt.savefig(outdir+'cuts_charge.png')
 plt.close()
 
 for mc in mcs:
-    plt.hist(mc['pmts'].charge, label=mc['name'], bins=100, range=pmt_range)
-plt.xlabel("Charge per event in PMTs [pes]")
-plt.title("NEXT-100")
-plt.legend()
-plt.savefig(outdir+'distr_'+'pmt_energy_comp.png')
-plt.close()
+    plt.hist(mc['sipms'].groupby('event_id').apply(lambda grp: grp.groupby('sensor_id').agg({'charge':'sum'})).charge)
+    plt.title('Signal per SiPM per event')
+    plt.xlabel('charge [pes]')
+    plt.savefig(outdir+'cuts_charge_'+mc['name']+'.png')
+    plt.close()
+"""
+mcs_by_size = [[], [], []]
+for mc in mcs:
+    if mc['size'] == 1:
+        mcs_by_size[0].append(mc)
+    elif mc['size'] == 3:
+        mcs_by_size[1].append(mc)
+    elif mc['size'] == 6:
+        mcs_by_size[2].append(mc)
+for mcs in mcs_by_size:
+    for mc in mcs:
+        plt.plot(cuts, mc['eff'], 'o', label=mc['name'])
+    plt.xlabel('SiPM signal threshold [pes]')
+    plt.ylabel('Signal after threshold / total signal')
+    plt.title('SiPM Efficiency, '+event_str)
+    plt.legend()
+    plt.savefig(outdir+'cuts_eff_'+str(mc['size'])+'.png')
+    plt.close()
 
+    for mc in mcs:
+        plt.plot(cuts, mc['eff'], 'o')
+        plt.xlabel('SiPM signal threshold [pes]')
+        plt.ylabel('Signal after threshold / total signal')
+        plt.title('SiPM Efficiency, '+mc['name'])
+        plt.savefig(outdir+'cuts_eff_'+mc['name']+'.png')
+        plt.close()
