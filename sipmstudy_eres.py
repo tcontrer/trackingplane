@@ -77,12 +77,14 @@ for size in sizes:
             pass
         else:
             this_pitch = pitch
-            mc = {'size': size, 'pitch':this_pitch}
-            dir = 's'+str(size)+'mmp'+str(this_pitch)+'mm'
             if pitch == 'fullcoverage':
                 this_pitch = size
-                mc['extra_dir'] = dir
-                dir = pitch
+                mc = {'size': size, 'pitch':this_pitch}
+                mc['extra_dir'] = 's'+str(size)+'mmp'+str(this_pitch)+'mm/'
+                dir = 'fullcoverage'
+            else:
+                dir = 's'+str(size)+'mmp'+str(this_pitch)+'mm/'
+                mc = {'size': size, 'pitch':this_pitch}
             mc['dir'] = dir
             mc['name'] = str(size)+'mm SiPM, '+str(this_pitch)
 
