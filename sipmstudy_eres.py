@@ -22,6 +22,23 @@ def Thresh_by_Event(group, dark_count):
     thresh = dark_count.loc[event].dark_count
     return group[group.charge > thresh]
 
+def Center_of_Event(sipm_response_in_event, sipm_positions):
+    top_sipms = sipm_response_in_event[sipm_response_in_event.charge > max(sipm_response_in_event.charge)*.1]
+    sensor_positions = sipm_positions.loc[sipm_positions.sensor_id.isin(top_sipms.sensor_id.tolist())]
+    sensor_positions = sensor_positions.reindex(sensor_positions.index.repeat(top_sipms.groupby('sensor_id').sensor_id.count().values))
+    top_sipms = top_sipms.merge(sensor_positions)
+
+    x = np.sum(top_sipms.charge*top_sipms.x)/np.sum(top_sipms.charge)
+    y = np.sum(top_sipms.charge*top_sipms.y)/np.sum(top_sipms.charge)
+    z = np.sum(top_sipms.charge*top_sipms.z)/np.sum(top_sipms.charge)
+    charge = np.sum(top_sipms.charge)
+    event_id = top_sipms.event_id[0]
+    
+    r = np.sqrt(x**2 + y**2 + z**2)
+
+    return pd.Series({'event_id':event_id, 'charge':charge,'x':x, 'y':y, 'z':z, 'r':r})
+
+
 print("Starting")
 nfiles = 1 # will fail if too few events
 local = True
@@ -77,7 +94,9 @@ for mc in mcs:
     pmts = pd.DataFrame()
     sipm_timing = pd.DataFrame()
     pmt_timing = pd.DataFrame()
+    
     for file in mc['files']:
+
         print('Running over: '+file)
         try:
             sns_response = pd.read_hdf(file, 'MC/sns_response')
@@ -86,6 +105,9 @@ for mc in mcs:
             continue
 
         sns_response_sorted = sns_response.sort_values(by=['sensor_id'])
+        sns_positions = pd.read_hdf(file, 'MC/sns_positions')
+        sns_pos_sorted = sns_positions.sort_values(by=['sensor_id'])
+        sipm_positions = sns_pos_sorted[sns_pos_sorted["sensor_name"].str.contains("SiPM")]
 
         # Sum up all charges per event in sipms
         sipm_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] >999]
@@ -96,6 +118,13 @@ for mc in mcs:
         #    pmt_response = pmt_response.loc[pmt_response["time_bin"] >0]
         #print('sipm_response after: ', sipm_response)
 
+        
+        # Filter by R
+        event_centers = sipm_response.groupby('event_id').apply(lambda grp: Center_of_Event(grp, sipm_positions))
+        sipm_response = sipm_response[sipm_response.event_id.isin(event_centers[event_centers.r < 400].event_id)]
+        pmt_response = pmt_response[pmt_response.event_id.isin(event_centers[event_centers.r < 400].event_id)]
+
+        # Sum up all charges per event in sipms
         sipm_response_byevent = sipm_response.groupby('event_id')
         #sum_sipms_byevent = sipm_response_byevent.apply(lambda group: group.groupby('sensor_id').agg({"charge":"sum"})).groupby('event_id')
         #above_thresh_sipms = sum_sipms_byevent.apply(lambda group: group[group.charge > dark_rate[mc['size']]*event_time])
@@ -142,11 +171,11 @@ for mc in mcs:
 for mc in mcs:
     bins_fit = 50
     if event_type == 'kr':
-        fit_range_sipms = (np.mean(mc['sipms'].charge)-np.std(mc['sipms'].charge), np.mean(mc['sipms'].charge)+np.std(mc['sipms'].charge))
-        fit_range_pmts = (np.mean(mc['pmts'].charge)-np.std(mc['pmts'].charge), np.mean(mc['pmts'].charge)+np.std(mc['pmts'].charge))
+        fit_range_sipms = (np.min(mc['sipms'].charge), np.max(mc['sipms'].charge)) #np.mean(np.mean(mc['sipms'].charge)-np.std(mc['sipms'].charge), np.mean(mc['sipms'].charge)+np.std(mc['sipms'].charge))
+        fit_range_pmts = (np.min(mc['pmts'].charge), np.max(mc['pmts'].charge)) #np.mean(mc['pmts'].charge)-np.std(mc['pmts'].charge), np.mean(mc['pmts'].charge)+np.std(mc['pmts'].charge))
     else:
-        fit_range_sipms = (np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge)/2., np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge))
-        fit_range_pmts = (np.mean(mc['pmts'].charge), np.mean(mc['pmts'].charge) + np.std(mc['pmts'].charge))
+        fit_range_sipms = (np.mean(mc['sipms'].charge) - np.std(mc['sipms'].charge), np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge))
+        fit_range_pmts = (np.mean(mc['pmts'].charge) - np.std(mc['sipms'].charge), np.mean(mc['pmts'].charge) + np.std(mc['pmts'].charge))
 
     print(mc['dir']+': Average Dark count = '+str(mc['dark_count']))
 
