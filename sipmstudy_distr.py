@@ -17,13 +17,13 @@ from scipy.stats import norm
 from ic_functions import *
 
 print("Starting")
-nfiles = 100 # will fail if too few events
+nfiles = 5 # will fail if too few events
 local = False
 event_type = 'kr'
 
 pitches = ['fullcoverage', 7, 15]
-sizes = [1, 1.3, 3, 6]
-teflon = 'teflonhole_5mm'
+sizes = [1.3, 3, 6]
+teflon = 'no_teflon' #'teflonhole_5mm'
 
 if local:
     outdir = '/Users/taylorcontreras/Development/Research/trackingplane/'
@@ -63,6 +63,7 @@ for size in sizes:
                     mc["files"] = [indir+teflon+'/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
                 else:
                     mc["files"] = [indir+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+            mcs.append(mc)
 
 for mc in mcs:
 

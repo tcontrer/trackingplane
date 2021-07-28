@@ -60,6 +60,7 @@ for size in sizes:
                     mc["files"] = [indir+teflon+'/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
                 else:
                     mc["files"] = [indir+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+            mcs.append(mc)
 
 cuts = [i for i in range(0,50)]
 for mc in mcs:
