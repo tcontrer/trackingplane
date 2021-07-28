@@ -38,23 +38,26 @@ print("Creating dictionaries")
 mcs = []
 for size in sizes:
     for pitch in pitches:
-        this_pitch = pitch
-        mc = {'size': size, 'pitch':this_pitch}
-        dir = 's'+str(size)+'mmp'+str(this_pitch)+'mm'
-        if pitch == 'fullcoverage':
-            this_pitch = size
-            mc['extra_dir'] = dir
-            dir = pitch
-        mc['dir'] = dir
-        mc['name'] = str(size)+'mm SiPM, '+str(this_pitch)
-
-        if mc['dir'] == "fullcoverage":
-            mc["files"] = [indir+mc['dir']+mc['extra_dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+        if size == 6 and pitch == 7:
+            pass
         else:
-            if not local:
-                mc["files"] = [indir+teflon+'/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+            this_pitch = pitch
+            mc = {'size': size, 'pitch':this_pitch}
+            dir = 's'+str(size)+'mmp'+str(this_pitch)+'mm'
+            if pitch == 'fullcoverage':
+                this_pitch = size
+                mc['extra_dir'] = dir
+                dir = pitch
+            mc['dir'] = dir
+            mc['name'] = str(size)+'mm SiPM, '+str(this_pitch)
+
+            if mc['dir'] == "fullcoverage":
+                mc["files"] = [indir+mc['dir']+mc['extra_dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
             else:
-                mc["files"] = [indir+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+                if not local:
+                    mc["files"] = [indir+teflon+'/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+                else:
+                    mc["files"] = [indir+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
 
 
 for mc in mcs:
