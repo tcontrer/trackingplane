@@ -33,16 +33,16 @@ def Center_of_Event(sipm_response_in_event, sipm_positions):
     z = np.sum(top_sipms.charge*top_sipms.z)/np.sum(top_sipms.charge)
     charge = np.sum(top_sipms.charge)
     event_id = top_sipms.event_id[0]
-    
+
     r = np.sqrt(x**2 + y**2 + z**2)
 
     return pd.Series({'event_id':event_id, 'charge':charge,'x':x, 'y':y, 'z':z, 'r':r})
 
 
 print("Starting")
-nfiles = 1000 # will fail if too few events
-local = False
-event_type = 'qbb'
+nfiles = 1 # will fail if too few events
+local = True
+event_type = 'kr'
 
 tp_area = np.pi * (984./2.)**2 # mm^2
 dark_rate = {1:80./1000., 3: 450./1000., 6: 1800./1000.} # SiPM size: average dark rate per sipm (counts/microsecond)
@@ -51,26 +51,15 @@ if event_type == 'kr':
 else:
     event_time = 100. # microseconds
 
-# Create dictionary to hold run info
-print("Creating dictionaries")
-s1p1 = {"size":1, "pitch":1, 'teflon':'no_teflon', 'name':'1mm SiPM, full coverage', "dir":"fullcoverage", 'extra_dir':'/s1mmp1mm'}
-s1p7 = {"size":1, "pitch":7, 'teflon':'teflonhole_5mm', 'name': '1mm SiPM, 7mm pitch',"dir": "s1mmp7mm"}
-s1p15 = {"size":1, "pitch":15, 'teflon':'teflonhole_5mm', 'name': '1mm SiPM, 15mm pitch',"dir": "s1mmp15mm"}
-s3p3 = {"size":3, "pitch":3, 'teflon':'no_teflon', 'name':'3mm SiPM, full coverage', "dir":"fullcoverage", 'extra_dir':'/s3mmp3mm'}
-s3p6 = {"size":3, "pitch":6, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 6mm pitch',"dir": "s3mmp6mm"}
-s3p7 = {"size":3, "pitch":7, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 7mm pitch',"dir": "s3mmp7mm"}
-s3p8 = {"size":3, "pitch":8, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 8mm pitch',"dir": "s3mmp8mm"}
-s3p9 = {"size":3, "pitch":9, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 9mm pitch',"dir": "s3mmp9mm"}
-s3p10 = {"size":3, "pitch":10, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 10mm pitch',"dir": "s3mmp9mm"}
-s3p15 = {"size":3, "pitch":15, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 15mm pitch', "dir": "s3mmp15mm"}
-s6p6 = {"size":6, "pitch":6,'teflon':'no_teflon', 'name':'6mm SiPM, full coverage', "dir":"fullcoverage", 'extra_dir':'/s6mmp6mm'}
-s6p7 = {"size":6, "pitch":7, 'teflon':'teflonhole_5mm', 'name': '6mm SiPM, 7mm pitch',"dir": "s6mmp7mm"}
-s6p15 = {"size":6, "pitch":15, 'teflon':'teflonhole_8mm', 'name': '6mm SiPM, 15mm pitch', "dir": "s6mmp15mm"}
+pitches = ['fullcoverage', 7, 15]
+sizes = [1, 1.3, 3, 6]
+teflon = 'teflonhole_5mm'
 
 if local:
     outdir = '/Users/taylorcontreras/Development/Research/trackingplane/'
     indir = outdir
-    mcs = [s3p15]
+    pitches = [15]
+    sizes = [3]
 else:
     if event_type == 'kr':
         outdir = '/n/home12/tcontreras/plots/trackingplane/krypton/'
@@ -78,21 +67,36 @@ else:
     else:
         outdir = '/n/home12/tcontreras/plots/trackingplane/highenergy/'
         indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
-    mcs = [s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p6, s6p15] #s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                    
 
-for mc in mcs:
-    if mc['dir'] == "fullcoverage":
-        mc["files"] = [indir+mc['dir']+mc['extra_dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
-    else:
-        mc["files"] = [indir+mc['teflon']+'/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+# Create dictionary to hold run info
+print("Creating dictionaries")
+mcs = []
+for size in sizes:
+    for pitch in pitches:
+        this_pitch = pitch
+        mc = {'size': size, 'pitch':this_pitch}
+        dir = 's'+str(size)+'mmp'+str(this_pitch)+'mm'
+        if pitch == 'fullcoverage':
+            this_pitch = size
+            mc['extra_dir'] = dir
+            dir = pitch
+        mc['dir'] = dir
+        mc['name'] = str(size)+'mm SiPM, '+str(this_pitch)
 
+        if mc['dir'] == "fullcoverage":
+            mc["files"] = [indir+mc['dir']+mc['extra_dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+        else:
+            if not local:
+                mc["files"] = [indir+teflon+'/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+            else:
+                mc["files"] = [indir+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
 
 for mc in mcs:
     sipms = pd.DataFrame()
     pmts = pd.DataFrame()
     sipm_timing = pd.DataFrame()
     pmt_timing = pd.DataFrame()
-    
+
     for file in mc['files']:
 
         print('Running over: '+file)
@@ -116,7 +120,7 @@ for mc in mcs:
         #    pmt_response = pmt_response.loc[pmt_response["time_bin"] >0]
         #print('sipm_response after: ', sipm_response)
 
-        
+
         # Filter by R
         event_centers = sipm_response.groupby('event_id').apply(lambda grp: Center_of_Event(grp, sipm_positions))
         sipm_response = sipm_response[sipm_response.event_id.isin(event_centers[event_centers.r < 400].event_id)]
@@ -128,7 +132,7 @@ for mc in mcs:
         #above_thresh_sipms = sum_sipms_byevent.apply(lambda group: group[group.charge > dark_rate[mc['size']]*event_time])
         charges = sipm_response_byevent.agg({"charge":"sum"})
         sipms = sipms.append(charges, ignore_index=True)
-        
+
         # Sum up all charges per event in pmts
         pmt_response_byevent = pmt_response.groupby('event_id')
         charges = pmt_response_byevent.agg({"charge":"sum"})
@@ -140,16 +144,14 @@ for mc in mcs:
         #sipm_timing = sipm_timing.append(sipm_response.groupby(['event_id'])\
         #                                 .apply(lambda group: group['time_bin'].max() - group['time_bin'].min()), ignore_index=True)
         #print('timing: ', sipm_timing)
-    
-    # Threshold event based on dark noise
-    #this = sipms.groupby('event_id')
-    #dark_count  = sipm_timing*dark_rate[mc['size']]
-    #dark_count = dark_count.to_frame().rename(columns={0:'dark_count'})
-    #sipms = this.apply(Thresh_by_Event, (dark_count))#.set_index('event_id') #.groupby('event_id')
 
-    # Threshold based on dark noise
-    #sipms = sipms[sipms.charge > dark_rate[mc['size']]*event_time]
-    print(sipms)
+    # Threshold event based on dark noise
+    this = sipms.groupby('event_id')
+    dark_rate = 10.
+    dark_count  = sipm_timing*dark_rate
+    dark_count = dark_count.rename(columns={0:'dark_count'})
+    sipms = this.apply(Thresh_by_Event, (dark_count))#.set_index('event_id') #.groupby('event_id')
+
     sns_positions = pd.read_hdf(file, 'MC/sns_positions')
     sns_pos_sorted = sns_positions.sort_values(by=['sensor_id'])
     sipm_positions = sns_pos_sorted[sns_pos_sorted["sensor_name"].str.contains("SiPM")]
@@ -167,7 +169,7 @@ for mc in mcs:
         mc_sizes[1].append(mc)
     elif mc['size'] == 6:
         mc_sizes[2].append(mc)
-    
+
 for mc in mcs:
     bins_fit = 50
     if event_type == 'kr':
@@ -177,7 +179,7 @@ for mc in mcs:
         fit_range_sipms = (np.mean(mc['sipms'].charge) - np.std(mc['sipms'].charge), np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge))
         fit_range_pmts = (np.mean(mc['pmts'].charge) - np.std(mc['sipms'].charge), np.mean(mc['pmts'].charge) + np.std(mc['pmts'].charge))
 
-    #print(mc['dir']+': Average Dark count = '+str(mc['dark_count']))
+    print(mc['dir']+': Average Dark count = '+str(mc['dark_count']))
 
     sipm_fit = fit_energy(mc['sipms'].charge, bins_fit, fit_range_sipms)
     mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'] = get_fit_params(sipm_fit)
@@ -200,7 +202,7 @@ for mc in mcs:
     plt.savefig(outdir+'eres_'+mc['name']+'_pmt_fit.png')
     plt.close()
     print('')
-   
+
 if event_type == 'kr':
     event_str = '41.5 keV'
 else:
