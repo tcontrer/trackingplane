@@ -26,6 +26,9 @@ print("Creating dictionaries")
 s1p1 = {"size":1, "pitch":1, 'teflon':'no_teflon', 'name':'1mm SiPM, full coverage', "dir":"fullcoverage", 'extra_dir':'/s1mmp1mm'}
 s1p7 = {"size":1, "pitch":7, 'teflon':'teflonhole_5mm', 'name': '1mm SiPM, 7mm pitch',"dir": "s1mmp7mm"}
 s1p15 = {"size":1, "pitch":15, 'teflon':'teflonhole_5mm', 'name': '1mm SiPM, 15mm pitch',"dir": "s1mmp15mm"}
+s13p13 = {"size":1.3, "pitch":1.3, 'teflon':'no_teflon', 'name':'1.3mm SiPM, full coverage', "dir":"fullcoverage", 'extra_dir':'/s1.3mmp1.3mm'}
+s13p7 = {"size":1.3, "pitch":7, 'teflon':'teflonhole_5mm', 'name': '1.3mm SiPM, 7mm pitch',"dir": "s1.3mmp7mm"}
+s13p15 = {"size":1.3, "pitch":15, 'teflon':'teflonhole_5mm', 'name': '1.3mm SiPM, 15mm pitch',"dir": "s1.3mmp15mm"}
 s3p3 = {"size":3, "pitch":3, 'teflon':'no_teflon', 'name':'3mm SiPM, full coverage', "dir":"fullcoverage", 'extra_dir':'/s3mmp3mm'}
 s3p6 = {"size":3, "pitch":6, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 6mm pitch',"dir": "s3mmp6mm"}
 s3p7 = {"size":3, "pitch":7, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 7mm pitch',"dir": "s3mmp7mm"}
@@ -55,7 +58,7 @@ else:
         outdir = '/n/home12/tcontreras/plots/trackingplane/highenergy/'
         indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
     
-    mcs = [s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p6, s6p15] #s1p1, s1p7nt, s1p15nt, s3p3, s3p7nt, s3p15nt, s6p7nt, s6p16nt] #s1p1, s1p7, s1p15, s3p3, s3p7, s3p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]
+    mcs = [s13p13, s13p7, s13p15, s3p3, s3p7, s3p15, s6p6, s6p15] #s1p1, s1p7nt, s1p15nt, s3p3, s3p7nt, s3p15nt, s6p7nt, s6p16nt] #s1p1, s1p7, s1p15, s3p3, s3p7, s3p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]
     
 
 for mc in mcs:
