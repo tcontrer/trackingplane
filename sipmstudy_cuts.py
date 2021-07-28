@@ -54,7 +54,7 @@ for mc in mcs:
     else:
         mc["files"] = [indir+mc['teflon']+'/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
 
-cuts = [i*10 for i in range(0,200)]
+cuts = [i for i in range(0,50)]
 for mc in mcs:
     sipm_response = pd.DataFrame()
     #eff = {cut:pd.DataFrame() for cut in cuts}
@@ -79,11 +79,11 @@ for mc in mcs:
         cut_sipm_response = sipm_response[sipm_response.charge > cut]
         this = cut_sipm_response.groupby('event_id')
         charges = this.agg({"charge":"sum"})
-        efficiencies.append(charges/total_charges)
-        #efficiencies.append(eff[cut].charge.mean())# Calculate efficiencies based on threshold cut
+        eff = charges/total_charges
+        efficiencies.append(eff.charge.mean())# Calculate efficiencies based on threshold cut
     
     mc['eff'] = efficiencies
-    #mc['sipms'] = sipm_response
+    mc['sipms'] = sipm_response
     
 if event_type == 'kr':
     event_str = '41.5 keV'
@@ -94,6 +94,7 @@ for mc in mcs:
     plt.hist(mc['sipms'].groupby('event_id').apply(lambda grp: grp.groupby('sensor_id').agg({'charge':'sum'})).charge)
     plt.title('Signal per SiPM per event')
     plt.xlabel('charge [pes]')
+    plt.yscale('log')
     plt.savefig(outdir+'cuts_charge.png')
     plt.close()
 
@@ -121,11 +122,12 @@ for mcs in mcs_by_size:
         plt.hist(mc['sipms'].groupby('event_id').apply(lambda grp: grp.groupby('sensor_id').agg({'charge':'sum'})).charge, bins=mc['b'], range=mc['r'])
         plt.title('Signal per SiPM per event')
         plt.xlabel('charge [pes]')
+        plt.yscale('log')
         plt.savefig(outdir+'cuts_charge_'+mc['name']+'.png')
         plt.close()
 
     for mc in mcs:
-        plt.hist(mc['sipms'].groupby('event_id').apply(lambda grp: grp.groupby('sensor_id').agg({'charge':'sum'})).charge, bins=mc['b'], range=mc['r'], lable=mc['name'])
+        plt.hist(mc['sipms'].groupby('event_id').apply(lambda grp: grp.groupby('sensor_id').agg({'charge':'sum'})).charge, bins=mc['b'], range=mc['r'], label=mc['name'])
     plt.title('Signal per SiPM per event')
     plt.xlabel('charge [pes]')
     plt.legend()

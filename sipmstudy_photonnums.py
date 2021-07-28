@@ -13,9 +13,9 @@ import matplotlib.pyplot as plt
 
 
 print("Starting")
-nfiles = 1000 # will fail if too few events
+nfiles = 100 # will fail if too few events
 local = False
-event_type = 'qbb'
+event_type = 'kr'
 num_sipms = 5
 
 # Create dictionary to hold run info
@@ -23,16 +23,25 @@ print("Creating dictionaries")
 s1p1 = {"size":1, "pitch":1, 'teflon':'no_teflon', 'name':'1mm SiPM, full coverage', "dir":"fullcoverage", 'extra_dir':'/s1mmp1mm'}
 s1p7 = {"size":1, "pitch":7, 'teflon':'teflonhole_5mm', 'name': '1mm SiPM, 7mm pitch',"dir": "s1mmp7mm"}
 s1p15 = {"size":1, "pitch":15, 'teflon':'teflonhole_5mm', 'name': '1mm SiPM, 15mm pitch',"dir": "s1mmp15mm"}
+s13p13 = {"size":1.3, "pitch":1.3, 'teflon':'no_teflon', 'name':'1.3mm SiPM, full coverage', "dir":"fullcoverage", 'extra_dir':'/s1.3mmp1.3mm'}
+s13p7 = {"size":1.3, "pitch":7, 'teflon':'teflonhole_5mm', 'name': '1.3mm SiPM, 7mm pitch',"dir": "s1.3mmp7mm"}
+s13p15 = {"size":1.3, "pitch":15, 'teflon':'teflonhole_5mm', 'name': '1.3mm SiPM, 15mm pitch',"dir": "s1.3mmp15mm"}
 s3p3 = {"size":3, "pitch":3, 'teflon':'no_teflon', 'name':'3mm SiPM, full coverage', "dir":"fullcoverage", 'extra_dir':'/s3mmp3mm'}
 s3p6 = {"size":3, "pitch":6, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 6mm pitch',"dir": "s3mmp6mm"}
 s3p7 = {"size":3, "pitch":7, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 7mm pitch',"dir": "s3mmp7mm"}
 s3p8 = {"size":3, "pitch":8, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 8mm pitch',"dir": "s3mmp8mm"}
 s3p9 = {"size":3, "pitch":9, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 9mm pitch',"dir": "s3mmp9mm"}
-s3p10 = {"size":3, "pitch":10, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 10mm pitch',"dir": "s3mmp10mm"}
+s3p10 = {"size":3, "pitch":10, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 10mm pitch',"dir": "s3mmp9mm"}
 s3p15 = {"size":3, "pitch":15, 'teflon':'teflonhole_5mm', 'name': '3mm SiPM, 15mm pitch', "dir": "s3mmp15mm"}
 s6p6 = {"size":6, "pitch":6,'teflon':'no_teflon', 'name':'6mm SiPM, full coverage', "dir":"fullcoverage", 'extra_dir':'/s6mmp6mm'}
 s6p7 = {"size":6, "pitch":7, 'teflon':'teflonhole_5mm', 'name': '6mm SiPM, 7mm pitch',"dir": "s6mmp7mm"}
 s6p15 = {"size":6, "pitch":15, 'teflon':'teflonhole_8mm', 'name': '6mm SiPM, 15mm pitch', "dir": "s6mmp15mm"}
+s6p15nt = {"size":6, "pitch":15, 'teflon':'no_teflon', 'name': '6mm SiPM, 15mm pitch, no teflon', "dir": "s6mmp15mm"}
+s1p7nt = {"size":1, "pitch":7, 'teflon':'no_teflon', 'name': '1mm SiPM, 7mm pitch, no teflon',"dir": "s1mmp7mm"}
+s1p15nt = {"size":1, "pitch":15, 'teflon':'no_teflon', 'name': '1mm SiPM, 15mm pitch, no teflon',"dir": "s1mmp15mm"}
+s3p15nt = {"size":3, "pitch":15, 'teflon':'no_teflon', 'name': '3mm SiPM, 15mm pitch, no teflon', "dir": "s3mmp15mm"}
+s6p7nt = {"size":6, "pitch":7, 'teflon':'no_teflon', 'name': '6mm SiPM, 7mm pitch, no teflon',"dir": "s6mmp7mm"}
+
 
 if local:
     outdir = '/Users/taylorcontreras/Development/Research/trackingplane/'
@@ -45,7 +54,8 @@ else:
     else:
         outdir = '/n/home12/tcontreras/plots/trackingplane/highenergy/'
         indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
-    mcs = [s1p1, s1p7, s1p15, s3p3, s3p7, s3p15, s6p6, s6p15] #, s3p7, s3p8, s3p9, s3p10, s3p15]                                                    
+
+    mcs = [s13p13, s13p7, s13p15, s3p3, s3p7, s3p15, s6p6, s6p15]                      
 
 for mc in mcs:
     if mc['dir'] == "fullcoverage":
@@ -91,7 +101,7 @@ print("Plotting")
 # Plot each i-th sipm for each mc
 mcs_by_size = [[], [], []]
 for mc in mcs:
-    if mc['size'] == 1:
+    if mc['size'] == 1 or mc['size'] == 1.3:
         mcs_by_size[0].append(mc)
     elif mc['size'] == 3:
         mcs_by_size[1].append(mc)
@@ -108,16 +118,16 @@ for mc in mcs:
 
 # Plot top 5 sipms for each mc
 for mc in mcs:
-    
+    r=(0,100)
     if event_type == 'kr':
-        if mc['size'] == 1:
+        if mc['size'] == 1 or mc['size'] == 1.3:
             r = (0, 50)
         elif mc['size'] == 3:
             r = (0,500)
         elif mc['size'] == 6:
             r = (0, 2300)
     else:
-        if mc['size'] == 1:
+        if mc['size'] == 1 or mc['size'] == 1.3:
             r = (0, 400)
         elif mc['size'] == 3:
             r = (0,7000)
@@ -147,14 +157,14 @@ for mc_size in mcs_by_size:
             print('Running over mc: ', mc)
             
             if event_type == 'kr':
-                if mc['size'] == 1:
+                if mc['size'] == 1 or mc['size'] == 1.3:
                     r = (0, 50)
                 elif mc['size'] == 3:
                     r = (0,500)
                 elif mc['size'] == 6:
                     r = (0, 2300)
             else:
-                if mc['size'] == 1:
+                if mc['size'] == 1 or mc['size'] == 1.3:
                     r = (0, 400)
                 elif mc['size'] == 3:
                     r = (0,7000)
