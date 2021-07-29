@@ -23,7 +23,7 @@ event_type = 'kr'
 
 pitches = ['fullcoverage', 7, 15]
 sizes = [1.3, 3, 6]
-teflon = 'no_teflon' #'teflonhole_5mm'
+teflon = 'teflonhole_5mm'
 
 if local:
     outdir = '/Users/taylorcontreras/Development/Research/trackingplane/'
