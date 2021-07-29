@@ -13,58 +13,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import norm
+from open_files import make_mc_dictionaries
 
 from ic_functions import *
 
 print("Starting")
-nfiles = 100 # will fail if too few events
-local = False
+nfiles = 1 # will fail if too few events
+local = True
 event_type = 'kr'
-pitches = ['fullcoverage', 7, 15]
-sizes = [1, 1.3, 3, 6]
-teflon = 'teflonhole_5mm'
+teflon = True
 
-if local:
-    outdir = '/Users/taylorcontreras/Development/Research/trackingplane/'
-    indir = outdir
-    pitches = [15]
-    sizes = [3]
-else:
-    if event_type == 'kr':
-        outdir = '/n/home12/tcontreras/plots/trackingplane/krypton/'
-        indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/"
-    else:
-        outdir = '/n/home12/tcontreras/plots/trackingplane/highenergy/'
-        indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
-
-# Create dictionary to hold run info
-print("Creating dictionaries")
-mcs = []
-for size in sizes:
-    for pitch in pitches:
-        if size == 6 and pitch == 7:
-            pass
-        else:
-            this_pitch = pitch
-            if pitch == 'fullcoverage':
-                this_pitch = size
-                mc = {'size': size, 'pitch':this_pitch}
-                mc['extra_dir'] = 's'+str(size)+'mmp'+str(this_pitch)+'mm'
-                dir = 'fullcoverage'
-            else:
-                dir = 's'+str(size)+'mmp'+str(this_pitch)+'mm'
-                mc = {'size': size, 'pitch':this_pitch}
-
-            mc['dir'] = dir
-            mc['name'] = str(size)+'mm SiPM, '+str(this_pitch)
-
-            if mc['dir'] == "fullcoverage":
-                mc["files"] = [indir+mc['dir']+'/'+mc['extra_dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
-            else:
-                if not local:
-                    mc["files"] = [indir+teflon+'/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
-                else:
-                    mc["files"] = [indir+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+mcs_to_use = ['s13p13', 's13p7', 's13p15', 's3p3', 's3p7', 's3p15', 's6p6', 's6p15']
+mcs, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon)
 
 for mc in mcs:
 
