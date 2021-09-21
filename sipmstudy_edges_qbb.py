@@ -11,12 +11,13 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+from open_files import make_mc_dictionaries
 
 print("Starting")
-nfiles = 1000 # will fail if too few events
+nfiles = 100 # will fail if too few events
 local = False
 event_type = 'qbb'
-teflon = True
+teflon = False
 
 mcs_to_use = ['s13p13', 's13p7', 's13p15', 's3p3', 's3p7', 's3p15', 's6p6', 's6p15']
 mcs, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon)
@@ -41,10 +42,24 @@ for mc in mcs:
 
     mc['sipms_mean'] = sipms_mean
     mc['sipms_max'] = sipms_max
+        
+    plt.hist(mc['sipms_max'])
+    plt.xlabel('max charge [pes] / microsecond / event')
+    plt.title(mc['name'])
+    plt.yscale('log')
+    plt.savefig(outdir+'edges_max_'+str(mc['name'])+'.png')
+    plt.close()
+
+    plt.hist(mc['sipms_mean'])
+    plt.xlabel('mean charge [pes] / microsecond / event')
+    plt.title(mc['name'])
+    plt.yscale('log')
+    plt.savefig(outdir+'edges_mean_'+str(mc['name'])+'.png')
+    plt.close()
 
 mcs_by_size = [[], [], []]
 for mc in mcs:
-    if mc['size'] == 1:
+    if mc['size'] == 1.3:
         mcs_by_size[0].append(mc)
         mc['r_max'] = (0,1500)
         mc['r_mean'] = (0,8)
@@ -61,7 +76,7 @@ bins = 100
 for mcs in mcs_by_size:
     bins_mean = 0
     for mc in mcs:
-        plt.hist(sipms_max, label=mc['name'], range=mc['r_max'], bins=bins)
+        plt.hist(mc['sipms_max'], label=mc['name'], range=mc['r_max'], bins=bins)
         bins_mean = max(bins_mean, mc['r_mean'][1])
     plt.xlabel('max charge [pes] / microsecond / event')
     plt.title(str(mc['size'])+'mm SiPMs')
@@ -71,9 +86,9 @@ for mcs in mcs_by_size:
     plt.close()
 
     for mc in mcs:
-        plt.hist(sipms_mean, label=mc['name'], range=mc['r_mean'], bins=bins_mean)
+        plt.hist(mc['sipms_mean'], label=mc['name'], range=mc['r_mean'], bins=bins_mean)
     plt.xlabel('mean charge [pes] / microsecond / event')
-    plt.title('SiPMs, '+mc['name'])
+    plt.title(str(mc['size']) + 'mm SiPMs')
     plt.yscale('log')
     plt.legend()
     plt.savefig(outdir+'edges_mean_'+str(mc['size'])+'mm.png')

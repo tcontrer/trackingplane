@@ -9,6 +9,7 @@ import pandas as pd
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
+from open_files import make_mc_dictionaries
 
 from ic_functions import *
 

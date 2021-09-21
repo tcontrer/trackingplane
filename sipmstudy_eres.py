@@ -14,6 +14,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import norm
 from fit_functions import fit_energy, plot_fit_energy, print_fit_energy, get_fit_params
+from open_files import make_mc_dictionaries
 
 from ic_functions import *
 

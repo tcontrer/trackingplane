@@ -9,6 +9,7 @@ import pandas as pd
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
+from open_files import make_mc_dictionaries
 
 from ic_functions import *
 
@@ -33,10 +34,10 @@ def Center_of_Event(sipm_response_in_event, sipm_positions):
     return pd.Series({'event_id':event_id, 'charge':charge,'x':x, 'y':y, 'z':z})
 
 print("Starting")
-nfiles = 50 # fails if there are not enough events
+nfiles = 10 # fails if there are not enough events
 local = False
-event_type = 'qbb'
-teflon = True
+event_type = 'kr'
+teflon = False
 
 dark_rate = {1:80./1000., 3: 450./1000., 6: 1800./1000.} # SiPM size: average dark rate per sipm (counts/microsecond)
 if event_type == 'kr':
@@ -96,11 +97,11 @@ for mc in mcs:
         summed_charges_byevent_sipm = response_perevent_sipm.agg({"charge":"sum"})
 
         # Estimated dark count
-        print('Before: ', summed_charges_byevent_sipm)
-        dark_count = dark_rate[mc['size']]*event_time
-        summed_charges_byevent_sipm = summed_charges_byevent_sipm[summed_charges_byevent_sipm.charge > dark_count]
-        print('Dark count: ', dark_count)
-        print('After: ', summed_charges_byevent_sipm)
+        #print('Before: ', summed_charges_byevent_sipm)
+        #dark_count = dark_rate[mc['size']]*event_time
+        #summed_charges_byevent_sipm = summed_charges_byevent_sipm[summed_charges_byevent_sipm.charge > dark_count]
+        #print('Dark count: ', dark_count)
+        #print('After: ', summed_charges_byevent_sipm)
 
         #print('sipm_response: ', sipm_response)
         #print('timing: ', sipm_timing)

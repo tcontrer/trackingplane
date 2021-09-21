@@ -11,6 +11,7 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+from open_files import make_mc_dictionaries
 
 from ic_functions import *
 
