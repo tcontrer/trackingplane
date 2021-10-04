@@ -24,14 +24,14 @@ teflon = False
 mcs_to_use = ['s13p13', 's13p7', 's13p15', 's3p3', 's3p7', 's3p15', 's6p6', 's6p15']
 mcs, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon)
 print("made dirs")
-def GetPeakInfo(event_response):
+def GetPeakInfo(event_response, mc_name):
     event_id = int(event_response.event_id.values[0])
     time_bins = event_response.time_bin.drop_duplicates().sort_values()
     plt.hist(time_bins, bins=100)
     plt.xlabel('Time bins [microseconds]')
     plt.title('Event '+str(event_id))
     #plt.show()
-    plt.savefig(outdir+"event"+str(event_id)+"timebins.png")
+    plt.savefig(outdir+"event"+str(event_id)+"_"+mc_name+"timebins.png")
     plt.close()
 
     # Splits times into groups (peaks) to get blobs
@@ -53,7 +53,7 @@ def GetPeakInfo(event_response):
         ax.set_xlabel('x [mm]')
         ax.set_ylabel('y [mm]')
         #plt.show()
-        fig.savefig(outdir+"event"+str(event_id)+"_peak"+str(i)+"xyresponse.png")
+        fig.savefig(outdir+"event"+str(event_id)+"_"+mc_name+"_peak"+str(i)+"xyresponse.png")
         plt.close()
 
         max_sipm = thispeak_charges.loc[thispeak_charges.charge == thispeak_charges.charge.max()].sensor_id.values[0]
@@ -63,7 +63,7 @@ def GetPeakInfo(event_response):
         plt.xlabel('Time bins [microseconds]')
         plt.ylabel('[pes]')
         #plt.show()
-        plt.savefig(outdir+"event"+str(event_id)+"_peak"+str(i)+"maxsipm.png")
+        plt.savefig(outdir+"event"+str(event_id)+"_"+mc_name+"_peak"+str(i)+"maxsipm.png")
         plt.close()
 
         width = thispeak_charges.time_bin.values.max() - thispeak_charges.time_bin.values.min()
@@ -75,7 +75,7 @@ def GetPeakInfo(event_response):
 
         i += 1
 
-def GetBlobDensity(event_hits, centers, rmax = 30., num_r = 100):
+def GetBlobDensity(event_hits, centers, mc_name, rmax = 30., num_r = 100):
     event_id = int(event_hits.event_id.values[0])
     rs = np.linspace(1.0 ,rmax, num_r)
     blob_energies1 = []
@@ -104,7 +104,7 @@ def GetBlobDensity(event_hits, centers, rmax = 30., num_r = 100):
     plt.title('Event '+str(event_id))
     #plt.yscale('log')
     #plt.show()
-    plt.savefig(outdir+"event"+str(event_id)+"blob_density.png")
+    plt.savefig(outdir+"event"+str(event_id)+"_"+mc_name+"blob_density.png")
     plt.close()
 
 
@@ -116,7 +116,7 @@ def GetBlobDensity(event_hits, centers, rmax = 30., num_r = 100):
     plt.title('Event '+str(event_id))
     #plt.yscale('log')
     #plt.show()
-    plt.savefig(outdir+"event"+str(event_id)+"blob_energy.png")
+    plt.savefig(outdir+"event"+"_"+mc_name+str(event_id)+"blob_energy.png")
     plt.close()
 
 def GoodBlobs(event_particles, min_diff=30.):
@@ -174,11 +174,11 @@ for mc in mcs:
                 ax.set_zlabel('z (mm)')
                 ax.set_title('Hits for event '+str(event_id))
                 #plt.show()
-                plt.savefig(outdir+"event"+str(event_id)+"_track.png")
+                plt.savefig(outdir+"event"+str(event_id)+"_"+mc['name']+"_track.png")
                 plt.close()
 
                 event_response = sipm_response[sipm_response.event_id==event_id]
-                GetPeakInfo(event_response)
+                GetPeakInfo(event_response, mc['name'])
 
                 event_particles = particles[particles.event_id==event_id]
                 event_electrons = event_particles.loc[event_particles.particle_name=='e-']
