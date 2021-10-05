@@ -16,8 +16,8 @@ import numpy as np
 from open_files import make_mc_dictionaries
 
 print("Starting")
-nfiles = 2
-local = True
+nfiles = 10
+local = False
 event_type = 'qbb'
 teflon = False
 
@@ -96,16 +96,16 @@ def GetBlobDensity(event_hits, centers, mc_name, rmax = 30., num_r = 100):
         name1 = 'blob 2'
         name2 = 'blob 1'
 
-    plt.plot(rs/10., np.array(blob_energies1)*10000/((4*np.pi*rs**3.)/3.), label=name1)
-    plt.plot(rs/10., np.array(blob_energies2)*10000/((4*np.pi*rs**3.)/3.), label=name2)
-    plt.legend()
-    plt.xlabel('Blob radius [cm]')
-    plt.ylabel('Blob energy density [keV/cm3]')
-    plt.title('Event '+str(event_id))
+    #plt.plot(rs/10., np.array(blob_energies1)*10000/((4*np.pi*rs**3.)/3.), label=name1)
+    #plt.plot(rs/10., np.array(blob_energies2)*10000/((4*np.pi*rs**3.)/3.), label=name2)
+    #plt.legend()
+    #plt.xlabel('Blob radius [cm]')
+    #plt.ylabel('Blob energy density [keV/cm3]')
+    #plt.title('Event '+str(event_id))
     #plt.yscale('log')
     #plt.show()
-    plt.savefig(outdir+"event"+str(event_id)+"_"+mc_name+"blob_density.png")
-    plt.close()
+    #plt.savefig(outdir+"event"+str(event_id)+"_"+mc_name+"blob_density.png")
+    #plt.close()
 
 
     plt.plot(rs, blob_energies1, label=name1)
@@ -174,14 +174,14 @@ for mc in mcs:
                 ax.set_zlabel('z (mm)')
                 ax.set_title('Hits for event '+str(event_id))
                 #plt.show()
-                plt.savefig(outdir+"event"+str(event_id)+"_"+mc['name']+"_track.png")
+                plt.savefig(outdir+"event"+str(event_id)+"_"+mc['dir']+"_track.png")
                 plt.close()
 
                 event_response = sipm_response[sipm_response.event_id==event_id]
-                GetPeakInfo(event_response, mc['name'])
+                GetPeakInfo(event_response, mc['dir'])
 
                 event_particles = particles[particles.event_id==event_id]
                 event_electrons = event_particles.loc[event_particles.particle_name=='e-']
                 primary_electrons_event = event_electrons.loc[event_electrons.mother_id==0]
                 centers = np.array([primary_electrons_event.final_x.values, primary_electrons_event.final_y.values, primary_electrons_event.final_z.values]).T
-                GetBlobDensity(event_hits, centers)
+                GetBlobDensity(event_hits, centers, mc['dir'])
