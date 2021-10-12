@@ -41,7 +41,7 @@ def make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon=True):
         indir = outdir+'data/'
         if event_type=='qbb':
             indir += 'highenergy/'
-        mcs = [all_mcs['s13p15']]
+        mcs = [all_mcs['s3p15']]
     else:
         if event_type == 'kr':
             outdir = '/n/home12/tcontreras/plots/trackingplane/krypton/'
