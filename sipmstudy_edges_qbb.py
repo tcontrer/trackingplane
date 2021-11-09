@@ -14,13 +14,21 @@ import numpy as np
 from open_files import make_mc_dictionaries
 
 print("Starting")
-nfiles = 100 # will fail if too few events
+nfiles = 1000 # will fail if too few events
 local = False
 event_type = 'qbb'
 teflon = False
 
-mcs_to_use = ['s13p13', 's13p7', 's13p15', 's3p3', 's3p7', 's3p15', 's6p6', 's6p15']
+mcs_to_use = ['s13p7', 's13p15', 's3p3', 's3p7', 's3p15', 's6p6', 's6p15']
 mcs, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon)
+
+outdir = '/n/home12/tcontreras/plots/trackingplane/highenergy/'
+indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/test/"
+
+#mc = {}
+#mc =  {"size":3, "pitch":15, 'teflon':'no teflon', 'name':'3mm SiPM, 15mm pitch', "dir":"test"}
+#mc["files"] = [indir+'/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5" for i in range(1,nfiles+1)]
+#mcs = [mc]
 
 for mc in mcs:
     sipms_mean = np.array([])

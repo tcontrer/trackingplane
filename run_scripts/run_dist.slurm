@@ -4,8 +4,8 @@
 #SBATCH -t 1-0:00          # Runtime in D-HH:MM, minimum of 10 minutes
 #SBATCH -p guenette   # Partition to submit to
 #SBATCH --mem=40000           # Memory pool for all cores (see also --mem-per-cpu)
-#SBATCH -o jobinfo/myoutput_distr_qbb.out  # File to which STDOUT will be written, %j inserts jobid
-#SBATCH -e jobinfo/myerrors_distr_qbb.err  # File to which STDERR will be written, %j inserts jobid
+#SBATCH -o jobinfo/myoutput_distr_qbb_nt.out  # File to which STDOUT will be written, %j inserts jobid
+#SBATCH -e jobinfo/myerrors_distr_qbb_nt.err  # File to which STDERR will be written, %j inserts jobid
 
 source /n/holystore01/LABS/guenette_lab/Users/tcontreras/IC_setup2020.sh
 

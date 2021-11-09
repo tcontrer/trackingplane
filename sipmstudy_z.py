@@ -15,8 +15,8 @@ import numpy as np
 from open_files import make_mc_dictionaries
 
 print("Starting")
-nfiles = 1 # will fail if too few events
-local = True
+nfiles = 100 # will fail if too few events
+local = False
 event_type = 'kr'
 teflon = False
 
@@ -63,3 +63,4 @@ for mc in mcs:
     plt.title(mc['name'])
     plt.colorbar()
     plt.savefig(outdir+'zmap_'+mc['dir']+'.png')
+    plt.close()

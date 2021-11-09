@@ -14,26 +14,26 @@ import numpy as np
 from open_files import make_mc_dictionaries
 
 print("Starting")
-nfiles = 1 # will fail if too few events
-local = True
+nfiles = 20 # will fail if too few events
+local = False
 event_type = 'qbb'
 teflon = False
 
 mcs_to_use = ['s13p13', 's13p7', 's13p15', 's3p3', 's3p7', 's3p15', 's6p6', 's6p15']
 mcs, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon)
 
-def GoodEvents(event_particles, min_diff=30., r_cut=700., z_cut = 1500.):
+def GoodEvents(event_particles, min_diff=20., r_cut=950., z_cut = 1170.):
     event_electrons = event_particles.loc[event_particles.particle_name=='e-']
     primary_electrons_event = event_electrons.loc[event_electrons.mother_id==0]
     centers = np.array([primary_electrons_event.final_x.values, primary_electrons_event.final_y.values, primary_electrons_event.final_z.values]).T
-    blob_dist = np.array([abs(centers[0,i] - centers[1,i]) for i in range(len(centers[0]))]) - min_diff
 
-    # Cut on number of blobs and distance between blobs
-    if np.shape(centers)==(2,3) and np.all(blob_dist) > 0:
+    # Cut on number of blobs
+    if np.shape(centers)==(2,3):
         rs = [np.sqrt(center[0]**2. + center[1]**2.) for center in centers]
-
-        # Cut on x-y (r) and z positions away from edges
-        if np.all(rs) < r_cut and np.all(centers[:,2]) < z_cut:
+        blob_dist = np.array([abs(centers[0,i] - centers[1,i]) for i in range(len(centers[0]))]) - min_diff
+        #print(rs, blob_dist, centers[:,2])
+        # Cut distance between blobs, on x-y (r) and z positions away from edges
+        if np.all(blob_dist)>0: #np.all(rs) < r_cut and np.all(centers[:,2]) < z_cut and np.all(centers[:,2]) > 30. and np.all(blob_dist) > 0:
             return event_particles
     return
 
@@ -65,6 +65,7 @@ for mc in mcs:
         sipms_mean = np.append(sipms_mean, sipm_response.groupby('event_id').apply(lambda grp: np.mean(grp.charge)))
         sipms_max = np.append(sipms_max, sipm_response.groupby('event_id').apply(lambda grp: np.max(grp.charge)))
 
+    print(sipms_max)
     mc['sipms_mean'] = sipms_mean
     mc['sipms_max'] = sipms_max
 
@@ -72,14 +73,14 @@ for mc in mcs:
     plt.xlabel('max charge [pes] / microsecond / event')
     plt.title(mc['name'])
     plt.yscale('log')
-    plt.savefig(outdir+'edges_max_'+str(mc['name'])+'.png')
+    plt.savefig(outdir+'filtered_max_'+str(mc['name'])+'.png')
     plt.close()
 
     plt.hist(mc['sipms_mean'])
     plt.xlabel('mean charge [pes] / microsecond / event')
     plt.title(mc['name'])
     plt.yscale('log')
-    plt.savefig(outdir+'edges_mean_'+str(mc['name'])+'.png')
+    plt.savefig(outdir+'filtered_mean_'+str(mc['name'])+'.png')
     plt.close()
 
 mcs_by_size = [[], [], []]
@@ -107,7 +108,7 @@ for mcs in mcs_by_size:
     plt.title(str(mc['size'])+'mm SiPMs')
     plt.yscale('log')
     plt.legend()
-    plt.savefig(outdir+'edges_max_'+str(mc['size'])+'mm.png')
+    plt.savefig(outdir+'filtered_max_'+str(mc['size'])+'mm.png')
     plt.close()
 
     for mc in mcs:
@@ -116,5 +117,5 @@ for mcs in mcs_by_size:
     plt.title(str(mc['size']) + 'mm SiPMs')
     plt.yscale('log')
     plt.legend()
-    plt.savefig(outdir+'edges_mean_'+str(mc['size'])+'mm.png')
+    plt.savefig(outdir+'filtered_mean_'+str(mc['size'])+'mm.png')
     plt.close()

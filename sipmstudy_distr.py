@@ -21,10 +21,11 @@ print("Starting")
 nfiles = 1000 # will fail if too few events
 local = False
 event_type = 'qbb'
-teflon = False
+teflon = True
 
 mcs_to_use = ['s13p13', 's13p7', 's13p15', 's3p3', 's3p7', 's3p15', 's6p6', 's6p15']
 mcs, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon)
+outdir =  outdir+'/teflon/'
 
 for mc in mcs:
 

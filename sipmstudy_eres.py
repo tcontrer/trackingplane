@@ -17,6 +17,7 @@ from fit_functions import fit_energy, plot_fit_energy, print_fit_energy, get_fit
 from open_files import make_mc_dictionaries
 
 from ic_functions import *
+from invisible_cities.core.core_functions  import shift_to_bin_centers
 
 def Thresh_by_Event(group, dark_count):
     event = group.index.tolist()[0] #.event_id.max()
@@ -41,10 +42,10 @@ def Center_of_Event(sipm_response_in_event, sipm_positions):
 
 
 print("Starting")
-nfiles = 1 # will fail if too few events
-local = True
-event_type = 'kr'
-teflon = True
+nfiles = 1000 # will fail if too few events
+local = False
+event_type = 'qbb'
+teflon = False
 
 tp_area = np.pi * (984./2.)**2 # mm^2
 dark_rate = {1:80./1000., 3: 450./1000., 6: 1800./1000.} # SiPM size: average dark rate per sipm (counts/microsecond)
@@ -53,7 +54,7 @@ if event_type == 'kr':
 else:
     event_time = 100. # microseconds
 
-mcs_to_use = ['s13p13', 's13p7', 's13p15', 's3p3', 's3p7', 's3p15', 's6p6', 's6p15']
+mcs_to_use = ['s13p7', 's13p15', 's3p3', 's3p7', 's3p15', 's6p6', 's6p15']
 mcs, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon)
 
 for mc in mcs:
@@ -88,8 +89,8 @@ for mc in mcs:
 
         # Filter by R
         event_centers = sipm_response.groupby('event_id').apply(lambda grp: Center_of_Event(grp, sipm_positions))
-        sipm_response = sipm_response[sipm_response.event_id.isin(event_centers[event_centers.r < 400].event_id)]
-        pmt_response = pmt_response[pmt_response.event_id.isin(event_centers[event_centers.r < 400].event_id)]
+        sipm_response = sipm_response[sipm_response.event_id.isin(event_centers[event_centers.r < 450].event_id)]
+        pmt_response = pmt_response[pmt_response.event_id.isin(event_centers[event_centers.r < 450].event_id)]
 
         # Sum up all charges per event in sipms
         sipm_response_byevent = sipm_response.groupby('event_id')
@@ -111,11 +112,11 @@ for mc in mcs:
         #print('timing: ', sipm_timing)
 
     # Threshold event based on dark noise
-    this = sipms.groupby('event_id')
-    dark_rate = 10.
-    dark_count  = sipm_timing*dark_rate
-    dark_count = dark_count.rename(columns={0:'dark_count'})
-    sipms = this.apply(Thresh_by_Event, (dark_count))#.set_index('event_id') #.groupby('event_id')
+    #this = sipms.groupby('event_id')
+    #dark_rate = 10.
+    #dark_count  = sipm_timing*dark_rate
+    #dark_count = dark_count.rename(columns={0:'dark_count'})
+    #sipms = this.apply(Thresh_by_Event, (dark_count))#.set_index('event_id') #.groupby('event_id')
 
     sns_positions = pd.read_hdf(file, 'MC/sns_positions')
     sns_pos_sorted = sns_positions.sort_values(by=['sensor_id'])
@@ -128,7 +129,7 @@ for mc in mcs:
 
 mc_sizes = [[], [], []]
 for mc in mcs:
-    if mc['size'] == 1:
+    if mc['size'] == 1 or mc['size'] == 1.3:
         mc_sizes[0].append(mc)
     elif mc['size'] == 3:
         mc_sizes[1].append(mc)
@@ -141,15 +142,28 @@ for mc in mcs:
         fit_range_sipms = (np.min(mc['sipms'].charge), np.max(mc['sipms'].charge)) #np.mean(np.mean(mc['sipms'].charge)-np.std(mc['sipms'].charge), np.mean(mc['sipms'].charge)+np.std(mc['sipms'].charge))
         fit_range_pmts = (np.min(mc['pmts'].charge), np.max(mc['pmts'].charge)) #np.mean(mc['pmts'].charge)-np.std(mc['pmts'].charge), np.mean(mc['pmts'].charge)+np.std(mc['pmts'].charge))
     else:
-        fit_range_sipms = (np.mean(mc['sipms'].charge) - np.std(mc['sipms'].charge), np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge))
-        fit_range_pmts = (np.mean(mc['pmts'].charge) - np.std(mc['sipms'].charge), np.mean(mc['pmts'].charge) + np.std(mc['pmts'].charge))
+        y, b = np.histogram(mc['sipms'].charge, bins= bins_fit, range=[np.min(mc['sipms'].charge), np.max(mc['sipms'].charge)])
+        x = shift_to_bin_centers(b)
+        peak = x[np.argmax(y)]
+        fit_range_sipms = (peak - np.std(mc['sipms'].charge)/10., peak + np.std(mc['sipms'].charge)/10.)
 
-    print(mc['dir']+': Average Dark count = '+str(mc['dark_count']))
+        y, b = np.histogram(mc['pmts'].charge, bins= bins_fit, range=[np.min(mc['pmts'].charge), np.max(mc['pmts'].charge)])
+        x = shift_to_bin_centers(b)
+        peak = x[np.argmax(y)]
+        fit_range_pmts = (peak - np.std(mc['pmts'].charge), peak + np.std(mc['pmts'].charge))
+
+        #fit_range_sipms = (np.mean(mc['sipms'].charge) - np.std(mc['sipms'].charge), np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge))
+        #fit_range_pmts = (np.mean(mc['pmts'].charge) - np.std(mc['sipms'].charge), np.mean(mc['pmts'].charge) + np.std(mc['pmts'].charge))
+
+    #print(mc['dir']+': Average Dark count = '+str(mc['dark_count']))
 
     sipm_fit = fit_energy(mc['sipms'].charge, bins_fit, fit_range_sipms)
     mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'] = get_fit_params(sipm_fit)
-    print(mc['name'])
-    print('SiPMs')
+    print(mc['name']+'-------------------')
+    print('SiPMs --------')
+    print('Response: ', mc['sipms'])
+    print('Mean and std', np.mean(mc['sipms'].charge), np.std(mc['sipms'].charge))
+
     print_fit_energy(sipm_fit)
     plot_fit_energy(sipm_fit)
     plt.xlabel('charge [pes]')
@@ -159,7 +173,7 @@ for mc in mcs:
 
     pmt_fit = fit_energy(mc['pmts'].charge, bins_fit, fit_range_pmts)
     mc['pmt_eres'], mc['pmt_fwhm'], mc['pmt_mean'] = get_fit_params(pmt_fit)
-    print('PMTs')
+    print('PMTs -------')
     print_fit_energy(pmt_fit)
     plot_fit_energy(pmt_fit)
     plt.xlabel('charge [pes]')
@@ -174,10 +188,10 @@ else:
     event_str = r'$Q_{\beta \beta}$'
 
 def to_qbb(x):
-    return x / np.sqrt(2.4)
+    return x * np.sqrt(41./2458)
 
 def back_tokr(x):
-    return x * np.sqrt(2.4)
+    return x / np.sqrt(41./2458)
 
 
 fig, ax = plt.subplots()

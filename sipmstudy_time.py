@@ -14,8 +14,8 @@ import numpy as np
 from open_files import make_mc_dictionaries
 
 print("Starting")
-nfiles = 1
-local = True
+nfiles = 100
+local = False
 event_type = 'kr'
 teflon = False
 
@@ -75,8 +75,9 @@ for mc in mcs:
         sipm_response = sipm_response[sipm_response.event_id.isin(lowz_events)]
         widths = sipm_response.groupby('event_id').apply(
                         lambda grp: GetWidth(grp)).dropna()
-        widths = pd.DataFrame({'event_id':widths.index, 'width':widths.values}).set_index('event_id')
-        sipm_timing_filtered = sipm_timing_filtered.append(widths)
+        if not widths.empty:
+            widths = pd.DataFrame({'event_id':widths.index, 'width':widths.values}).set_index('event_id')
+            sipm_timing_filtered = sipm_timing_filtered.append(widths)
 
     mc['sipm_times'] = np.array(sipm_timing.T.values).flatten()
     mc['sipm_times_f'] = np.array(sipm_timing_filtered.T.values).flatten()
@@ -92,7 +93,7 @@ for mc in mcs:
     plt.hist(mc["sipm_times"], bins=20)#, range=time_range)
     plt.xlabel('Event width by SiPMs [microseconds]')
     plt.title('NEXT_100, '+mc['name'])
-    plt.savefig(outdir+'time_'+mc['name']+"_sipm.png")
+    plt.savefig(outdir+'time_'+mc['dir']+"_sipm.png")
     plt.close()
 
     plt.hist(mc["sipm_times_f"], bins=20)#, range=time_range)
