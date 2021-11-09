@@ -25,37 +25,37 @@ class HistoPar:
     var    : np.array
     nbins  : int
     range  : Tuple[float]
-        
+
 @dataclass
 class GaussPar:
     mu    : Measurement
     std   : Measurement
     amp   : Measurement
-        
+
 @dataclass
 class ProfilePar:
     x  : np.array
     y  : np.array
     xu : np.array
     yu : np.array
-        
+
 @dataclass
 class FitPar(ProfilePar):
     f     : FitFunction
-        
+
 @dataclass
 class FitResult:
     par   : np.array
     err   : np.array
     chi2  : float
     valid : bool
-        
+
 @dataclass
 class FitCollection:
     fp   : FitPar
     hp   : HistoPar
     fr   : FitResult
-        
+
 def gaussian_parameters(x : np.array, range : Tuple[Number], bin_size : float = 1)->GaussPar:
     """
     Return the parameters defining a Gaussian
@@ -277,11 +277,14 @@ def print_fit_energy(fc : FitCollection):
         warnings.warn(f' mu  = {par[1]} ', UserWarning)
 
 def get_fit_params(fc: FitCollection):
-    
-    par = fc.fr.par
-    err = fc.fr.err
 
+    par = fc.fr.par
     eres = 2.35 * 100 * par[2] / par[1]
     fwhm = 2.35 * par[2]
     mean = par[1]
-    return eres, fwhm, mean
+
+    mean_err = err[1]
+    fwhm_err = err[2]
+    eres_err = (2.35/mean)*np.sqrt(fwhm_err**2. + (fwhm**2. / mean**2.)*mean_err**2.)
+
+    return eres, fwhm, mean, eres_err, fwhm_err, mean_err
