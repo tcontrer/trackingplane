@@ -127,7 +127,7 @@ for mc in mcs:
 
 mc_sizes = [[], [], []]
 for mc in mcs:
-    if mc['size'] == 1:
+    if mc['size'] == 1 or 1.3:
         mc_sizes[0].append(mc)
     elif mc['size'] == 3:
         mc_sizes[1].append(mc)
