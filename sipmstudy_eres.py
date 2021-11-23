@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import norm
-from fit_functions import fit_energy, plot_fit_energy, print_fit_energy, get_fit_params. eres_err
+from fit_functions import fit_energy, plot_fit_energy, print_fit_energy, get_fit_params
 from open_files import make_mc_dictionaries
 
 from ic_functions import *
@@ -41,9 +41,9 @@ def Center_of_Event(sipm_response_in_event, sipm_positions):
     return pd.Series({'event_id':event_id, 'charge':charge,'x':x, 'y':y, 'z':z, 'r':r})
 
 print("Starting")
-nfiles = 1000 # will fail if too few events
+nfiles = 100 # will fail if too few events
 local = False
-event_type = 'qbb'
+event_type = 'kr'
 teflon = False
 
 tp_area = np.pi * (984./2.)**2 # mm^2
@@ -157,10 +157,10 @@ for mc in mcs:
     #print(mc['dir']+': Average Dark count = '+str(mc['dark_count']))
 
     sipm_fit = fit_energy(mc['sipms'].charge, bins_fit, fit_range_sipms)
-    mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'], mc['sipm_eres_err'],
-        mc['sipm_fwhm_err'], mc['sipm_mean_err'] = get_fit_params(sipm_fit)
+    mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'], mc['sipm_eres_err'], mc['sipm_fwhm_err'], mc['sipm_mean_err'] = get_fit_params(sipm_fit)
     print(mc['name']+'-------------------')
     print('SiPMs --------')
+    print('Covergae: '+str(mc['coverage']))
     print('Response: ', mc['sipms'])
     print('Mean and std', np.mean(mc['sipms'].charge), np.std(mc['sipms'].charge))
     print_fit_energy(sipm_fit)
@@ -171,8 +171,7 @@ for mc in mcs:
     plt.close()
 
     pmt_fit = fit_energy(mc['pmts'].charge, bins_fit, fit_range_pmts)
-    mc['pmt_eres'], mc['pmt_fwhm'], mc['pmt_mean'], mc['pmt_eres_err'],
-        mc['pmt_fwhm_err'], mc['pmt_mean_err'] = get_fit_params(pmt_fit)
+    mc['pmt_eres'], mc['pmt_fwhm'], mc['pmt_mean'], mc['pmt_eres_err'], mc['pmt_fwhm_err'], mc['pmt_mean_err'] = get_fit_params(pmt_fit)
     print('PMTs -------')
     print_fit_energy(pmt_fit)
     plot_fit_energy(pmt_fit)
@@ -199,7 +198,7 @@ for mc_size in mc_sizes:
     if mc_size:
         pitches = [mc['pitch'] for mc in mc_size]
         plt.errorbar(pitches, [mc['sipm_eres'] for mc in mc_size],
-            [mc['sipm_eres_err'] for mc in mc_size], 'o',
+            [mc['sipm_eres_err'] for mc in mc_size], marker='o',
             label=str(mc_size[0]['size'])+'mm SiPMs')
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
@@ -217,7 +216,7 @@ for mc_size in mc_sizes:
     if mc_size:
         pitches = [mc['pitch'] for mc in mc_size]
         plt.errorbar(pitches, [mc['pmt_eres'] for mc in mc_size],
-            [mc['pmt_eres_err'] for mc in mc_size], 'o',
+            [mc['pmt_eres_err'] for mc in mc_size], marker='o',
             label=str(mc_size[0]['size'])+'mm SiPMs')
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
@@ -233,7 +232,7 @@ for mc_size in mc_sizes:
     if mc_size:
         pitches = [mc['pitch'] for mc in mc_size]
         plt.errorbar(pitches, [mc['sipm_fwhm'] for mc in mc_size],
-                [mc['sipm_fwhm_err'] for mc in mc_size],'o',
+                [mc['sipm_fwhm_err'] for mc in mc_size],marker='o',
                 label=str(mc_size[0]['size'])+'mm SiPMs')
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
@@ -248,7 +247,7 @@ for mc_size in mc_sizes:
     if mc_size:
         pitches = [mc['pitch'] for mc in mc_size]
         plt.errorbar(pitches, [mc['pmt_fwhm'] for mc in mc_size],
-            [mc['pmt_fwhm_err'] for mc in mc_size], 'o',
+            [mc['pmt_fwhm_err'] for mc in mc_size], marker='o',
             label=str(mc_size[0]['size'])+'mm SiPMs')
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
@@ -263,7 +262,7 @@ for mc_size in mc_sizes:
     if mc_size:
         pitches = [mc['pitch'] for mc in mc_size]
         plt.errorbar(pitches, [mc['sipm_mean'] for mc in mc_size],
-            [mc['sipm_mean_err'] for mc in mc_size], 'o',
+            [mc['sipm_mean_err'] for mc in mc_size], marker='o',
             label=str(mc_size[0]['size'])+'mm SiPMs')
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
@@ -278,7 +277,7 @@ for mc_size in mc_sizes:
     if mc_size:
         pitches = [mc['pitch'] for mc in mc_size]
         plt.errorbar(pitches, [mc['pmt_mean'] for mc in mc_size],
-            [mc['pmt_mean_err'] for mc in mc_size], 'o',
+            [mc['pmt_mean_err'] for mc in mc_size], marker='o',
             label=str(mc_size[0]['size'])+'mm SiPMs')
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
@@ -293,7 +292,7 @@ for mc_size in mc_sizes:
     if mc_size:
         coverages = [mc['coverage'] for mc in mc_size]
         plt.errorbar(coverages, [mc['sipm_eres'] for mc in mc_size],
-            [mc['sipm_eres_err'] for mc in mc_size], 'o',
+            [mc['sipm_eres_err'] for mc in mc_size], marker='o',
             label=str(mc_size[0]['size'])+'mm SiPMs')
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
@@ -309,7 +308,7 @@ for mc_size in mc_sizes:
     if mc_size:
         coverages = [mc['coverage'] for mc in mc_size]
         plt.errorbar(coverages, [mc['pmt_eres'] for mc in mc_size],
-            [mc['pmt_eres_err'] for mc in mc_size], 'o',
+            [mc['pmt_eres_err'] for mc in mc_size], marker='o',
             label=str(mc_size[0]['size'])+'mm SiPMs')
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
@@ -325,7 +324,7 @@ for mc_size in mc_sizes:
     if mc_size:
         coverages = [mc['coverage'] for mc in mc_size]
         plt.errorbar(coverages, [mc['sipm_fwhm'] for mc in mc_size],
-            [mc['sipm_fwhm_err'] for mc in mc_size], 'o',
+            [mc['sipm_fwhm_err'] for mc in mc_size], marker='o',
             label=str(mc_size[0]['size'])+'mm SiPMs')
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
@@ -340,7 +339,7 @@ for mc_size in mc_sizes:
     if mc_size:
         coverages = [mc['coverage'] for mc in mc_size]
         plt.errorbar(coverages, [mc['pmt_fwhm'] for mc in mc_size],
-            [mc['pmt_fwhm_err'] for mc in mc_size], 'o',
+            [mc['pmt_fwhm_err'] for mc in mc_size], marker='o',
             label=str(mc_size[0]['size'])+'mm SiPMs')
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
@@ -355,7 +354,7 @@ for mc_size in mc_sizes:
     if mc_size:
         coverages = [mc['coverage'] for mc in mc_size]
         plt.errorbar(coverages, [mc['sipm_mean'] for mc in mc_size],
-            [mc['sipm_mean_err'] for mc in mc_size], 'o',
+            [mc['sipm_mean_err'] for mc in mc_size], marker='o',
             label=str(mc_size[0]['size'])+'mm SiPMs')
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
@@ -370,7 +369,7 @@ for mc_size in mc_sizes:
     if mc_size:
         coverages = [mc['coverage'] for mc in mc_size]
         plt.errorbar(coverages, [mc['pmt_mean'] for mc in mc_size],
-            [mc['pmt_mean_err'] for mc in mc_size], 'o',
+            [mc['pmt_mean_err'] for mc in mc_size], marker='o',
             label=str(mc_size[0]['size'])+'mm SiPMs')
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))

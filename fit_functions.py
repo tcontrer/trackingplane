@@ -283,6 +283,7 @@ def get_fit_params(fc: FitCollection):
     fwhm = 2.35 * par[2]
     mean = par[1]
 
+    err = fc.fr.err
     mean_err = err[1]
     fwhm_err = err[2]
     eres_err = (2.35/mean)*np.sqrt(fwhm_err**2. + (fwhm**2. / mean**2.)*mean_err**2.)

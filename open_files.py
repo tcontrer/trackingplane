@@ -49,6 +49,8 @@ def make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon=True):
         else:
             outdir = '/n/home12/tcontreras/plots/trackingplane/highenergy/'
             indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
+        if not teflon:
+            outdir += 'no_teflon/'
 
     for mc in mcs:
         if not teflon:
