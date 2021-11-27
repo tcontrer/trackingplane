@@ -116,7 +116,7 @@ def GetMCInfo(mc):
     #dark_count  = sipm_timing*dark_rate
     #dark_count = dark_count.rename(columns={0:'dark_count'})
     #sipms = this.apply(Thresh_by_Event, (dark_count))#.set_index('event_id') #.groupby('event_id')
-    
+
     sns_positions = pd.read_hdf(file, 'MC/sns_positions')
     sns_pos_sorted = sns_positions.sort_values(by=['sensor_id'])
     sipm_positions = sns_pos_sorted[sns_pos_sorted["sensor_name"].str.contains("SiPM")]
@@ -136,10 +136,13 @@ mc_sizes = [[], [], []]
 for mc in mcs:
     if mc['size'] == 1 or mc['size'] == 1.3:
         mc_sizes[0].append(mc)
+        mc['color'] == 'r'
     elif mc['size'] == 3:
         mc_sizes[1].append(mc)
+        mc['color'] == 'b'
     elif mc['size'] == 6:
         mc_sizes[2].append(mc)
+        mc['color'] == 'g'
 mc_sizes_teflon = [[], [], []]
 for mc in mcs_teflon:
     if mc['size'] == 1 or mc['size'] == 1.3:
@@ -211,10 +214,10 @@ for mc_size, mc_size_teflon in zip(mc_sizes, mc_sizes_teflon):
         pitches = [mc['pitch'] for mc in mc_size]
         plt.errorbar(pitches, [mc['sipm_eres'] for mc in mc_size],
             [mc['sipm_eres_err'] for mc in mc_size], marker='o',
-            label=str(mc_size[0]['size'])+'mm SiPMs')
+            label=str(mc_size[0]['size'])+'mm SiPMs', color=mc_size[0]['color'])
         plt.errorbar(pitches, [mc['sipm_eres'] for mc in mc_size_teflon],
                      [mc['sipm_eres_err'] for mc in mc_size_teflon], marker='o', linestyle='--',
-            label=str(mc_size[0]['size'])+'mm SiPMs, teflon')
+            label=str(mc_size[0]['size'])+'mm SiPMs, teflon', color=mc_size[0]['color'])
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
 #fig.subplots_adjust(right=0.2)
@@ -232,10 +235,10 @@ for mc_size, mc_size_teflon in zip(mc_sizes, mc_sizes_teflon):
         pitches = [mc['pitch'] for mc in mc_size]
         plt.errorbar(pitches, [mc['sipm_fwhm'] for mc in mc_size],
                 [mc['sipm_fwhm_err'] for mc in mc_size],marker='o',
-                label=str(mc_size[0]['size'])+'mm SiPMs')
+                label=str(mc_size[0]['size'])+'mm SiPMs', color=mc_size[0]['color'])
         plt.errorbar(pitches, [mc['sipm_fwhm'] for mc in mc_size_teflon],
                      [mc['sipm_eres_err'] for mc in mc_size_teflon], marker='o', linestyle='--',
-            label=str(mc_size[0]['size'])+'mm SiPMs, teflon')
+            label=str(mc_size[0]['size'])+'mm SiPMs, teflon', color=mc_size[0]['color'])
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
 plt.xlabel('SiPM pitch [mm]')
@@ -250,10 +253,10 @@ for mc_size, mc_size_teflon in zip(mc_sizes, mc_sizes_teflon):
         pitches = [mc['pitch'] for mc in mc_size]
         plt.errorbar(pitches, [mc['sipm_mean'] for mc in mc_size],
             [mc['sipm_mean_err'] for mc in mc_size], marker='o',
-            label=str(mc_size[0]['size'])+'mm SiPMs')
+            label=str(mc_size[0]['size'])+'mm SiPMs', color=mc_size[0]['color'])
         plt.errorbar(pitches, [mc['sipm_mean'] for mc in mc_size_teflon],
                      [mc['sipm_eres_err'] for mc in mc_size_teflon], marker='o', linestyle='--',
-            label=str(mc_size[0]['size'])+'mm SiPMs, teflon')
+            label=str(mc_size[0]['size'])+'mm SiPMs, teflon', color=mc_size[0]['color'])
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
 plt.xlabel('SiPM pitch [mm]')
@@ -268,10 +271,10 @@ for mc_size, mc_size_teflon in zip(mc_sizes, mc_sizes_teflon):
         coverages = [mc['coverage'] for mc in mc_size]
         plt.errorbar(coverages, [mc['sipm_eres'] for mc in mc_size],
             [mc['sipm_eres_err'] for mc in mc_size], marker='o',
-            label=str(mc_size[0]['size'])+'mm SiPMs')
+            label=str(mc_size[0]['size'])+'mm SiPMs', color=mc_size[0]['color'])
         plt.errorbar(coverages, [mc['sipm_eres'] for mc in mc_size_teflon],
                      [mc['sipm_eres_err'] for mc in mc_size_teflon], marker='o', linestyle='--',
-            label=str(mc_size[0]['size'])+'mm SiPMs, teflon')
+            label=str(mc_size[0]['size'])+'mm SiPMs, teflon', color=mc_size[0]['color'])
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
 plt.xlabel('Tracking Plane Coverage %')
@@ -287,10 +290,10 @@ for mc_size, mc_size_teflon in zip(mc_sizes, mc_sizes_teflon):
         coverages = [mc['coverage'] for mc in mc_size]
         plt.errorbar(coverages, [mc['sipm_fwhm'] for mc in mc_size],
             [mc['sipm_fwhm_err'] for mc in mc_size], marker='o',
-            label=str(mc_size[0]['size'])+'mm SiPMs')
+            label=str(mc_size[0]['size'])+'mm SiPMs', color=mc_size[0]['color'])
         plt.errorbar(coverages, [mc['sipm_fwhm'] for mc in mc_size_teflon],
                      [mc['sipm_eres_err'] for mc in mc_size_teflon], marker='o', linestyle='--',
-            label=str(mc_size[0]['size'])+'mm SiPMs, teflon')
+            label=str(mc_size[0]['size'])+'mm SiPMs, teflon', color=mc_size[0]['color'])
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
 plt.xlabel('Tracking Plane Coverage %')
@@ -305,10 +308,10 @@ for mc_size, mc_size_teflon in zip(mc_sizes, mc_sizes_teflon):
         coverages = [mc['coverage'] for mc in mc_size]
         plt.errorbar(coverages, [mc['sipm_mean'] for mc in mc_size],
             [mc['sipm_mean_err'] for mc in mc_size], marker='o',
-            label=str(mc_size[0]['size'])+'mm SiPMs')
+            label=str(mc_size[0]['size'])+'mm SiPMs', color=mc_size[0]['color'])
         plt.errorbar(coverages, [mc['sipm_mean'] for mc in mc_size_teflon],
                      [mc['sipm_eres_err'] for mc in mc_size_teflon], marker='o', linestyle='--',
-            label=str(mc_size[0]['size'])+'mm SiPMs, teflon')
+            label=str(mc_size[0]['size'])+'mm SiPMs, teflon', color=mc_size[0]['color'])
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
 plt.xlabel('Tracking Plane Coverage %')
