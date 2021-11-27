@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import norm
-from fit_functions import fit_energy, plot_fit_energy, print_fit_energy, get_fit_params. eres_err
+from fit_functions import fit_energy, plot_fit_energy, print_fit_energy, get_fit_params
 from open_files import make_mc_dictionaries
 
 from ic_functions import *
@@ -41,8 +41,8 @@ def Center_of_Event(sipm_response_in_event, sipm_positions):
     return pd.Series({'event_id':event_id, 'charge':charge,'x':x, 'y':y, 'z':z, 'r':r})
 
 print("Starting")
-nfiles = 1 # will fail if too few events
-local = True
+nfiles = 100 # will fail if too few events
+local = False
 event_type = 'kr'
 
 tp_area = np.pi * (984./2.)**2 # mm^2
@@ -111,12 +111,12 @@ def GetMCInfo(mc):
         #print('timing: ', sipm_timing)
 
     # Threshold event based on dark noise
-    this = sipms.groupby('event_id')
-    dark_rate = 10.
-    dark_count  = sipm_timing*dark_rate
-    dark_count = dark_count.rename(columns={0:'dark_count'})
-    sipms = this.apply(Thresh_by_Event, (dark_count))#.set_index('event_id') #.groupby('event_id')
-
+    #this = sipms.groupby('event_id')
+    #dark_rate = 10.
+    #dark_count  = sipm_timing*dark_rate
+    #dark_count = dark_count.rename(columns={0:'dark_count'})
+    #sipms = this.apply(Thresh_by_Event, (dark_count))#.set_index('event_id') #.groupby('event_id')
+    
     sns_positions = pd.read_hdf(file, 'MC/sns_positions')
     sns_pos_sorted = sns_positions.sort_values(by=['sensor_id'])
     sipm_positions = sns_pos_sorted[sns_pos_sorted["sensor_name"].str.contains("SiPM")]
@@ -134,7 +134,7 @@ for mc in mcs_teflon:
 
 mc_sizes = [[], [], []]
 for mc in mcs:
-    if mc['size'] == 1 or 1.3:
+    if mc['size'] == 1 or mc['size'] == 1.3:
         mc_sizes[0].append(mc)
     elif mc['size'] == 3:
         mc_sizes[1].append(mc)
@@ -142,7 +142,7 @@ for mc in mcs:
         mc_sizes[2].append(mc)
 mc_sizes_teflon = [[], [], []]
 for mc in mcs_teflon:
-    if mc['size'] == 1 or 1.3:
+    if mc['size'] == 1 or mc['size'] == 1.3:
         mc_sizes_teflon[0].append(mc)
     elif mc['size'] == 3:
         mc_sizes_teflon[1].append(mc)
@@ -155,14 +155,18 @@ def GetEresInfo(mc):
         fit_range_sipms = (np.min(mc['sipms'].charge), np.max(mc['sipms'].charge)) #np.mean(np.mean(mc['sipms'].charge)-np.std(mc['sipms'].charge), np.mean(mc['sipms'].charge)+np.std(mc['sipms'].charge))
         fit_range_pmts = (np.min(mc['pmts'].charge), np.max(mc['pmts'].charge)) #np.mean(mc['pmts'].charge)-np.std(mc['pmts'].charge), np.mean(mc['pmts'].charge)+np.std(mc['pmts'].charge))
     else:
-        fit_range_sipms = (np.mean(mc['sipms'].charge) - np.std(mc['sipms'].charge), np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge))
-        fit_range_pmts = (np.mean(mc['pmts'].charge) - np.std(mc['sipms'].charge), np.mean(mc['pmts'].charge) + np.std(mc['pmts'].charge))
+        y, b = np.histogram(mc['sipms'].charge, bins= bins_fit, range=[np.min(mc['sipms'].charge), np.max(mc['sipms'].charge)])
+        x = shift_to_bin_centers(b)
+        peak = x[np.argmax(y)]
+        fit_range_sipms = (peak - np.std(mc['sipms'].charge)/10., peak + np.std(mc['sipms'].charge)/10.)
 
-    print(mc['dir']+': Average Dark count = '+str(mc['dark_count']))
+        y, b = np.histogram(mc['pmts'].charge, bins= bins_fit, range=[np.min(mc['pmts'].charge), np.max(mc['pmts'].charge)])
+        x = shift_to_bin_centers(b)
+        peak = x[np.argmax(y)]
+        fit_range_pmts = (peak - np.std(mc['pmts'].charge), peak + np.std(mc['pmts'].charge))
 
     sipm_fit = fit_energy(mc['sipms'].charge, bins_fit, fit_range_sipms)
-    mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'], mc['sipm_eres_err'],
-        mc['sipm_fwhm_err'], mc['sipm_mean_err'] = get_fit_params(sipm_fit)
+    mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'], mc['sipm_eres_err'], mc['sipm_fwhm_err'], mc['sipm_mean_err'] = get_fit_params(sipm_fit)
     print(mc['name'])
     print('SiPMs')
     print_fit_energy(sipm_fit)
@@ -173,8 +177,7 @@ def GetEresInfo(mc):
     plt.close()
 
     pmt_fit = fit_energy(mc['pmts'].charge, bins_fit, fit_range_pmts)
-    mc['pmt_eres'], mc['pmt_fwhm'], mc['pmt_mean'], mc['pmt_eres_err'],
-        mc['pmt_fwhm_err'], mc['pmt_mean_err'] = get_fit_params(pmt_fit)
+    mc['pmt_eres'], mc['pmt_fwhm'], mc['pmt_mean'], mc['pmt_eres_err'], mc['pmt_fwhm_err'], mc['pmt_mean_err'] = get_fit_params(pmt_fit)
     print('PMTs')
     print_fit_energy(pmt_fit)
     plot_fit_energy(pmt_fit)
@@ -207,10 +210,10 @@ for mc_size, mc_size_teflon in zip(mc_sizes, mc_sizes_teflon):
     if mc_size:
         pitches = [mc['pitch'] for mc in mc_size]
         plt.errorbar(pitches, [mc['sipm_eres'] for mc in mc_size],
-            [mc['sipm_eres_err'] for mc in mc_size], 'o',
+            [mc['sipm_eres_err'] for mc in mc_size], marker='o',
             label=str(mc_size[0]['size'])+'mm SiPMs')
         plt.errorbar(pitches, [mc['sipm_eres'] for mc in mc_size_teflon],
-            [mc['sipm_eres_err'] for mc in mc_size], 'o', linestyle='--'
+                     [mc['sipm_eres_err'] for mc in mc_size_teflon], marker='o', linestyle='--',
             label=str(mc_size[0]['size'])+'mm SiPMs, teflon')
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
@@ -228,10 +231,10 @@ for mc_size, mc_size_teflon in zip(mc_sizes, mc_sizes_teflon):
     if mc_size:
         pitches = [mc['pitch'] for mc in mc_size]
         plt.errorbar(pitches, [mc['sipm_fwhm'] for mc in mc_size],
-                [mc['sipm_fwhm_err'] for mc in mc_size],'o',
+                [mc['sipm_fwhm_err'] for mc in mc_size],marker='o',
                 label=str(mc_size[0]['size'])+'mm SiPMs')
         plt.errorbar(pitches, [mc['sipm_fwhm'] for mc in mc_size_teflon],
-            [mc['sipm_eres_err'] for mc in mc_size], 'o', linestyle='--'
+                     [mc['sipm_eres_err'] for mc in mc_size_teflon], marker='o', linestyle='--',
             label=str(mc_size[0]['size'])+'mm SiPMs, teflon')
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
@@ -246,10 +249,10 @@ for mc_size, mc_size_teflon in zip(mc_sizes, mc_sizes_teflon):
     if mc_size:
         pitches = [mc['pitch'] for mc in mc_size]
         plt.errorbar(pitches, [mc['sipm_mean'] for mc in mc_size],
-            [mc['sipm_mean_err'] for mc in mc_size], 'o',
+            [mc['sipm_mean_err'] for mc in mc_size], marker='o',
             label=str(mc_size[0]['size'])+'mm SiPMs')
         plt.errorbar(pitches, [mc['sipm_mean'] for mc in mc_size_teflon],
-            [mc['sipm_eres_err'] for mc in mc_size], 'o', linestyle='--'
+                     [mc['sipm_eres_err'] for mc in mc_size_teflon], marker='o', linestyle='--',
             label=str(mc_size[0]['size'])+'mm SiPMs, teflon')
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
@@ -264,10 +267,10 @@ for mc_size, mc_size_teflon in zip(mc_sizes, mc_sizes_teflon):
     if mc_size:
         coverages = [mc['coverage'] for mc in mc_size]
         plt.errorbar(coverages, [mc['sipm_eres'] for mc in mc_size],
-            [mc['sipm_eres_err'] for mc in mc_size], 'o',
+            [mc['sipm_eres_err'] for mc in mc_size], marker='o',
             label=str(mc_size[0]['size'])+'mm SiPMs')
         plt.errorbar(coverages, [mc['sipm_eres'] for mc in mc_size_teflon],
-            [mc['sipm_eres_err'] for mc in mc_size], 'o', linestyle='--'
+                     [mc['sipm_eres_err'] for mc in mc_size_teflon], marker='o', linestyle='--',
             label=str(mc_size[0]['size'])+'mm SiPMs, teflon')
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
@@ -283,10 +286,10 @@ for mc_size, mc_size_teflon in zip(mc_sizes, mc_sizes_teflon):
     if mc_size:
         coverages = [mc['coverage'] for mc in mc_size]
         plt.errorbar(coverages, [mc['sipm_fwhm'] for mc in mc_size],
-            [mc['sipm_fwhm_err'] for mc in mc_size], 'o',
+            [mc['sipm_fwhm_err'] for mc in mc_size], marker='o',
             label=str(mc_size[0]['size'])+'mm SiPMs')
         plt.errorbar(coverages, [mc['sipm_fwhm'] for mc in mc_size_teflon],
-            [mc['sipm_eres_err'] for mc in mc_size], 'o', linestyle='--'
+                     [mc['sipm_eres_err'] for mc in mc_size_teflon], marker='o', linestyle='--',
             label=str(mc_size[0]['size'])+'mm SiPMs, teflon')
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
@@ -301,10 +304,10 @@ for mc_size, mc_size_teflon in zip(mc_sizes, mc_sizes_teflon):
     if mc_size:
         coverages = [mc['coverage'] for mc in mc_size]
         plt.errorbar(coverages, [mc['sipm_mean'] for mc in mc_size],
-            [mc['sipm_mean_err'] for mc in mc_size], 'o',
+            [mc['sipm_mean_err'] for mc in mc_size], marker='o',
             label=str(mc_size[0]['size'])+'mm SiPMs')
         plt.errorbar(coverages, [mc['sipm_mean'] for mc in mc_size_teflon],
-            [mc['sipm_eres_err'] for mc in mc_size], 'o', linestyle='--'
+                     [mc['sipm_eres_err'] for mc in mc_size_teflon], marker='o', linestyle='--',
             label=str(mc_size[0]['size'])+'mm SiPMs, teflon')
 if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))

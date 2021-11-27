@@ -151,11 +151,6 @@ for mc in mcs:
         peak = x[np.argmax(y)]
         fit_range_pmts = (peak - np.std(mc['pmts'].charge), peak + np.std(mc['pmts'].charge))
 
-        #fit_range_sipms = (np.mean(mc['sipms'].charge) - np.std(mc['sipms'].charge), np.mean(mc['sipms'].charge) + np.std(mc['sipms'].charge))
-        #fit_range_pmts = (np.mean(mc['pmts'].charge) - np.std(mc['sipms'].charge), np.mean(mc['pmts'].charge) + np.std(mc['pmts'].charge))
-
-    #print(mc['dir']+': Average Dark count = '+str(mc['dark_count']))
-
     sipm_fit = fit_energy(mc['sipms'].charge, bins_fit, fit_range_sipms)
     mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'], mc['sipm_eres_err'], mc['sipm_fwhm_err'], mc['sipm_mean_err'] = get_fit_params(sipm_fit)
     print(mc['name']+'-------------------')
