@@ -43,7 +43,7 @@ for mc in mcs:
 
         sns_response_sorted = sns_response.sort_values(by=['sensor_id'])
         sipm_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] >999]
-        
+
         this_num_sat_by_cut = []
         #for cut in cuts:
         #    sat_sipms = sipm_response.groupby('event_id').apply(
@@ -52,13 +52,15 @@ for mc in mcs:
         #num_sat_by_cut.append(this_num_sat_by_cut)
 
         max_charges = sipm_response.groupby('event_id').apply(lambda grp: grp.charge.max())
-        total_charge = sipm_response.groupby('event_id').apply(lambda grp: grp.charge.sum())
+        total_charge = sipm_response[['event_id', 'charge']].groupby('event_id').agg({'charge':'sum'})
         this_num_events_sat = []
         this_energy_loss_by_cut = []
         for cut in big_cuts:
             this_num_events_sat.append(len(max_charges[max_charges.values > cut]))
-            total_charge_wcut = sipm_response.groupby('event_id').apply(lambda grp: grp[grp.charge<cut].charge.sum())
-            this_energy_loss_by_cut.append((total_charge_wcut / total_charge).mean())
+            sat_response = sipm_response[['event_id', 'charge']][sipm_response.charge > cut]
+            sat_response.loc[:,('charge')] = sat_response.charge - cut
+            sat_response = sat_response.groupby('event_id').agg({"charge":"sum"})
+            this_energy_loss_by_cut.append((sat_response / total_charge).mean())
         num_events_sat.append(this_num_events_sat)
         energy_loss_by_cut.append(this_energy_loss_by_cut)
     print('Num sat: ', num_sat_by_cut)
@@ -120,4 +122,3 @@ for mc_size in mc_sizes:
     plt.legend()
     plt.savefig(outdir+'sat_'+str(mc['size'])+'mm_fracpes.png')
     plt.close()
-
