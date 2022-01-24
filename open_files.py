@@ -5,7 +5,7 @@ This script holds functions used to open files for the tracking plane
 simulations.
 """
 
-def make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon=True):
+def make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon=True, new=False):
     """
     Created dictionaries to hold all information on simulations and returns.
     Inputs:
@@ -45,17 +45,32 @@ def make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon=True):
     else:
         if event_type == 'kr':
             outdir = '/n/home12/tcontreras/plots/trackingplane/krypton/'
-            indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/"
+            if new:
+                indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/new_output/"
+            else:
+                indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/"
         else:
             outdir = '/n/home12/tcontreras/plots/trackingplane/highenergy/'
-            indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
+            if new:
+                indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/new_output/highenergy/"
+            else:
+                indir = "/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/highenergy/"
         if not teflon:
             outdir += 'no_teflon/'
 
     for mc in mcs:
         if not teflon:
             mc['teflon'] = 'no_teflon'
-        mc["files"] = [indir+mc['teflon']+'/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5"
+        if new and event_type == 'qbb':
+            if mc['dir'] == 's1.3mmp1.3mm':
+                mc["files"] = [indir+mc['teflon']+'/'+mc['dir']+"/flex.0vbb."+str(i)+".h5"
+                               for i in range(1,nfiles+1)]
+            else:
+                mc["files"] = [indir+mc['teflon']+'/'+mc['dir']+"/flex.0vbb."+str(i)+".nexus.h5"
+                               for i in range(1,nfiles+1)]
+        else:
+            mc["files"] = [indir+mc['teflon']+'/'+mc['dir']+"/flex.kr83m."+str(i)+".nexus.h5"
                         for i in range(1,nfiles+1)]
+
         #print(mc['files'])
     return mcs, outdir, indir

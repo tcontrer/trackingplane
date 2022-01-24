@@ -44,7 +44,9 @@ print("Starting")
 nfiles = 100 # will fail if too few events
 local = False
 event_type = 'kr'
+new_sims = True
 
+r_cut = 400.
 tp_area = np.pi * (984./2.)**2 # mm^2
 dark_rate = {1:80./1000., 3: 450./1000., 6: 1800./1000.} # SiPM size: average dark rate per sipm (counts/microsecond)
 if event_type == 'kr':
@@ -53,8 +55,9 @@ else:
     event_time = 100. # microseconds
 
 mcs_to_use = ['s13p13', 's13p7', 's13p15', 's3p3', 's3p7', 's3p15', 's6p6', 's6p15']
-mcs, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon=False)
-mcs_teflon, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon=True)
+mcs, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon=False, new=new_sims)
+mcs_to_use = ['s13p13', 's13p7', 's13p15', 's3p3', 's3p7', 's3p15', 's6p6', 's6p15']
+mcs_teflon, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon=True, new=new_sims)
 
 def GetMCInfo(mc):
     sipms = pd.DataFrame()
@@ -88,8 +91,8 @@ def GetMCInfo(mc):
 
         # Filter by R
         event_centers = sipm_response.groupby('event_id').apply(lambda grp: Center_of_Event(grp, sipm_positions))
-        sipm_response = sipm_response[sipm_response.event_id.isin(event_centers[event_centers.r < 400].event_id)]
-        pmt_response = pmt_response[pmt_response.event_id.isin(event_centers[event_centers.r < 400].event_id)]
+        sipm_response = sipm_response[sipm_response.event_id.isin(event_centers[event_centers.r < r_cut].event_id)]
+        pmt_response = pmt_response[pmt_response.event_id.isin(event_centers[event_centers.r < r_cut].event_id)]
 
         # Sum up all charges per event in sipms
         sipm_response_byevent = sipm_response.groupby('event_id')
@@ -136,13 +139,13 @@ mc_sizes = [[], [], []]
 for mc in mcs:
     if mc['size'] == 1 or mc['size'] == 1.3:
         mc_sizes[0].append(mc)
-        mc['color'] == 'r'
+        mc['color'] = 'r'
     elif mc['size'] == 3:
         mc_sizes[1].append(mc)
-        mc['color'] == 'b'
+        mc['color'] = 'b'
     elif mc['size'] == 6:
         mc_sizes[2].append(mc)
-        mc['color'] == 'g'
+        mc['color'] = 'g'
 mc_sizes_teflon = [[], [], []]
 for mc in mcs_teflon:
     if mc['size'] == 1 or mc['size'] == 1.3:
@@ -169,9 +172,12 @@ def GetEresInfo(mc):
         fit_range_pmts = (peak - np.std(mc['pmts'].charge), peak + np.std(mc['pmts'].charge))
 
     sipm_fit = fit_energy(mc['sipms'].charge, bins_fit, fit_range_sipms)
-    mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'], mc['sipm_eres_err'], mc['sipm_fwhm_err'], mc['sipm_mean_err'] = get_fit_params(sipm_fit)
-    print(mc['name'])
-    print('SiPMs')
+    mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'], mc['sipm_eres_err'], mc['sipm_fwhm_err'], mc['sipm_mean_err'], mc['sipm_chi2'] = get_fit_params(sipm_fit)
+    print(mc['name']+'-------------------')
+    print('SiPMs --------')
+    print('Covergae: '+str(mc['coverage']))
+    print('Response: ', mc['sipms'])
+    print('Mean and std', np.mean(mc['sipms'].charge), np.std(mc['sipms'].charge))
     print_fit_energy(sipm_fit)
     plot_fit_energy(sipm_fit)
     plt.xlabel('charge [pes]')
@@ -180,8 +186,8 @@ def GetEresInfo(mc):
     plt.close()
 
     pmt_fit = fit_energy(mc['pmts'].charge, bins_fit, fit_range_pmts)
-    mc['pmt_eres'], mc['pmt_fwhm'], mc['pmt_mean'], mc['pmt_eres_err'], mc['pmt_fwhm_err'], mc['pmt_mean_err'] = get_fit_params(pmt_fit)
-    print('PMTs')
+    mc['pmt_eres'], mc['pmt_fwhm'], mc['pmt_mean'], mc['pmt_eres_err'], mc['pmt_fwhm_err'], mc['pmt_mean_err'], mc['pmt_chi2'] = get_fit_params(pmt_fit)
+    print('PMTs -------')
     print_fit_energy(pmt_fit)
     plot_fit_energy(pmt_fit)
     plt.xlabel('charge [pes]')
@@ -189,7 +195,6 @@ def GetEresInfo(mc):
     plt.savefig(outdir+'eres_'+mc['name']+'_pmt_fit.png')
     plt.close()
     print('')
-    return mc
 
 for mc in mcs:
     mc = GetEresInfo(mc)
@@ -202,11 +207,10 @@ else:
     event_str = r'$Q_{\beta \beta}$'
 
 def to_qbb(x):
-    return x / np.sqrt(2.4)
+    return x * np.sqrt(41./2458)
 
 def back_tokr(x):
-    return x * np.sqrt(2.4)
-
+    return x / np.sqrt(41./2458)
 
 fig, ax = plt.subplots()
 for mc_size, mc_size_teflon in zip(mc_sizes, mc_sizes_teflon):

@@ -2,10 +2,10 @@
 #SBATCH -n 1                # Number of cores
 #SBATCH -N 1                # Ensure that all cores are on one machine
 #SBATCH -t 1-0:00          # Runtime in D-HH:MM, minimum of 10 minutes
-#SBATCH -p serial_requeue   # Partition to submit to
+#SBATCH -p guenette   # Partition to submit to
 #SBATCH --mem=5000           # Memory pool for all cores (see also --mem-per-cpu)
-#SBATCH -o jobinfo/myoutput_distr_e_nt.out  # File to which STDOUT will be written, %j inserts jobid
-#SBATCH -e jobinfo/myerrors_distr_e_nt.err  # File to which STDERR will be written, %j inserts jobid
+#SBATCH -o jobinfo/myoutput_distr.out  # File to which STDOUT will be written, %j inserts jobid
+#SBATCH -e jobinfo/myerrors_distr.err  # File to which STDERR will be written, %j inserts jobid
 
 source /n/holystore01/LABS/guenette_lab/Users/tcontreras/IC_setup2020.sh
 
