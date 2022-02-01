@@ -10,6 +10,7 @@ import pandas as pd
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.offsetbox import AnchoredText
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import norm
@@ -41,11 +42,12 @@ def Center_of_Event(sipm_response_in_event, sipm_positions):
     return pd.Series({'event_id':event_id, 'charge':charge,'x':x, 'y':y, 'z':z, 'r':r})
 
 print("Starting")
-nfiles = 100 # will fail if too few events
+nfiles = 999 # will fail if too few events
 local = False
-event_type = 'kr'
+event_type = 'qbb'
 teflon = False
 
+r_cut = 300.
 tp_area = np.pi * (984./2.)**2 # mm^2
 dark_rate = {1:80./1000., 3: 450./1000., 6: 1800./1000.} # SiPM size: average dark rate per sipm (counts/microsecond)
 if event_type == 'kr':
@@ -53,8 +55,8 @@ if event_type == 'kr':
 else:
     event_time = 100. # microseconds
 
-mcs_to_use = ['s13p7', 's13p15', 's3p3', 's3p7', 's3p15', 's6p6', 's6p15']
-mcs, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon)
+mcs_to_use = ['s13p13', 's13p7', 's13p15', 's3p7', 's3p15', 's6p6', 's6p15']
+mcs, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon, new=True)
 
 for mc in mcs:
     sipms = pd.DataFrame()
@@ -88,8 +90,8 @@ for mc in mcs:
 
         # Filter by R
         event_centers = sipm_response.groupby('event_id').apply(lambda grp: Center_of_Event(grp, sipm_positions))
-        sipm_response = sipm_response[sipm_response.event_id.isin(event_centers[event_centers.r < 450].event_id)]
-        pmt_response = pmt_response[pmt_response.event_id.isin(event_centers[event_centers.r < 450].event_id)]
+        sipm_response = sipm_response[sipm_response.event_id.isin(event_centers[event_centers.r < r_cut].event_id)]
+        pmt_response = pmt_response[pmt_response.event_id.isin(event_centers[event_centers.r < r_cut].event_id)]
 
         # Sum up all charges per event in sipms
         sipm_response_byevent = sipm_response.groupby('event_id')
@@ -152,12 +154,13 @@ for mc in mcs:
         fit_range_pmts = (peak - np.std(mc['pmts'].charge), peak + np.std(mc['pmts'].charge))
 
     sipm_fit = fit_energy(mc['sipms'].charge, bins_fit, fit_range_sipms)
-    mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'], mc['sipm_eres_err'], mc['sipm_fwhm_err'], mc['sipm_mean_err'] = get_fit_params(sipm_fit)
+    mc['sipm_eres'], mc['sipm_fwhm'], mc['sipm_mean'], mc['sipm_eres_err'], mc['sipm_fwhm_err'], mc['sipm_mean_err'], mc['sipm_chi2'] = get_fit_params(sipm_fit)
     print(mc['name']+'-------------------')
     print('SiPMs --------')
     print('Covergae: '+str(mc['coverage']))
     print('Response: ', mc['sipms'])
     print('Mean and std', np.mean(mc['sipms'].charge), np.std(mc['sipms'].charge))
+    print('Eres err', mc['sipm_eres_err'])
     print_fit_energy(sipm_fit)
     plot_fit_energy(sipm_fit)
     plt.xlabel('charge [pes]')
@@ -166,10 +169,10 @@ for mc in mcs:
     plt.close()
 
     pmt_fit = fit_energy(mc['pmts'].charge, bins_fit, fit_range_pmts)
-    mc['pmt_eres'], mc['pmt_fwhm'], mc['pmt_mean'], mc['pmt_eres_err'], mc['pmt_fwhm_err'], mc['pmt_mean_err'] = get_fit_params(pmt_fit)
+    mc['pmt_eres'], mc['pmt_fwhm'], mc['pmt_mean'], mc['pmt_eres_err'], mc['pmt_fwhm_err'], mc['pmt_mean_err'], mc['pmt_chi2'] = get_fit_params(pmt_fit)
     print('PMTs -------')
     print_fit_energy(pmt_fit)
-    plot_fit_energy(pmt_fit)
+    plot_fit_energy(pmt_fit)                                                                       
     plt.xlabel('charge [pes]')
     plt.title('Energy Resolution Fit, '+mc['name'])
     plt.savefig(outdir+'eres_'+mc['name']+'_pmt_fit.png')
@@ -203,6 +206,7 @@ ax.set_ylabel(r'$E_{res}$ FWHM at '+event_str)
 #secax.set_xlabel(r'$E_{res}$ FWHM at $Q_{\beta \beta}$')
 ax.set_title('SiPM Energy Resolution')
 plt.legend()
+plt.grid()
 plt.savefig(outdir+'eres_'+'sipm.png')
 plt.close()
 
@@ -219,6 +223,7 @@ plt.xlabel('SiPM pitch [mm]')
 plt.title('PMT Energy Resolution')
 plt.ylabel(r'$E_{res}$ FWHM at '+event_str)
 plt.legend()
+plt.grid()
 plt.savefig(outdir+'eres_'+'pmt.png')
 plt.close()
 
@@ -234,6 +239,7 @@ if event_type == 'kr':
 plt.xlabel('SiPM pitch [mm]')
 plt.ylabel('SiPM FWHM')
 plt.legend()
+plt.grid()
 plt.savefig(outdir+'eres_'+'sipm_fwhm.png')
 plt.close()
 
@@ -249,6 +255,7 @@ if event_type == 'kr':
 plt.xlabel('SiPM pitch [mm]')
 plt.ylabel('PMT FWHM')
 plt.legend()
+plt.grid()
 plt.savefig(outdir+'eres_'+'pmt_fwhm.png')
 plt.close()
 
@@ -264,6 +271,7 @@ if event_type == 'kr':
 plt.xlabel('SiPM pitch [mm]')
 plt.ylabel('SiPM Mean')
 plt.legend()
+plt.grid()
 plt.savefig(outdir+'eres_'+'sipm_mean.png')
 plt.close()
 
@@ -279,6 +287,7 @@ if event_type == 'kr':
 plt.ylabel('PMT Mean')
 plt.xlabel('SiPM pitch [mm]')
 plt.legend()
+plt.grid()
 plt.savefig(outdir+'eres_'+'pmt_mean.png')
 plt.close()
 
@@ -295,6 +304,7 @@ plt.xlabel('Tracking Plane Coverage %')
 plt.ylabel(r'$E_{res}$ FWHM at '+event_str)
 plt.title('SiPM Energy Resolution')
 plt.legend()
+plt.grid()
 plt.savefig(outdir+'eres_coverage'+'sipm.png')
 plt.close()
 
@@ -309,6 +319,7 @@ if event_type == 'kr':
     secax = ax.secondary_yaxis('right', functions=(to_qbb, back_tokr))
 plt.xlabel('Tracking Plane Coverage [mm]')
 plt.legend()
+plt.grid()
 plt.title('PMT Energy Resolution')
 plt.ylabel(r'$E_{res}$ FWHM at '+event_str)
 plt.savefig(outdir+'eres_coverage'+'pmt.png')
@@ -326,6 +337,7 @@ if event_type == 'kr':
 plt.xlabel('Tracking Plane Coverage %')
 plt.ylabel('SiPM FWHM')
 plt.legend()
+plt.grid()
 plt.savefig(outdir+'eres_coverage'+'sipm_fwhm.png')
 plt.close()
 
@@ -341,6 +353,7 @@ if event_type == 'kr':
 plt.xlabel('Tracking Plane Coverage %')
 plt.ylabel('PMT FWHM')
 plt.legend()
+plt.grid()
 plt.savefig(outdir+'eres_coverage'+'pmt_fwhm.png')
 plt.close()
 
@@ -356,6 +369,7 @@ if event_type == 'kr':
 plt.xlabel('Tracking Plane Coverage %')
 plt.ylabel('SiPM Mean')
 plt.legend()
+plt.grid()
 plt.savefig(outdir+'eres_coverage'+'sipm_mean.png')
 plt.close()
 
@@ -371,5 +385,6 @@ if event_type == 'kr':
 plt.ylabel('PMT Mean')
 plt.xlabel('Tracking Plane Coverage %')
 plt.legend()
+plt.grid()
 plt.savefig(outdir+'eres_coverage'+'pmt_mean.png')
 plt.close()

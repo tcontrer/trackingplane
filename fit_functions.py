@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.offsetbox import AnchoredText
 from dataclasses import dataclass
 from typing      import Tuple
 from typing      import TypeVar
@@ -243,9 +244,11 @@ def plot_fit_energy(fc : FitCollection):
         entries  =  f'Entries = {len(x)}'
         mean     =  r'$\mu$ = {:7.2f}'.format(par[1])
         sigma    =  r'$\sigma$ = {:7.2f}'.format(par[2])
-        rx       =  r'$\sigma/mu$ (FWHM)  = {:7.2f}'.format(r)
-        stat     =  f'{entries}\n{mean}\n{sigma}\n{rx}'
+        rx       =  r'$\sigma/ \mu$ (FWHM) % = {:7.2f}'.format(r)
+        chi2     =  r'$\chi^2$ = {:7.2f}'.format(fc.fr.chi2)
+        stat     =  f'{entries}\n{mean}\n{sigma}\n{chi2}\n{rx}'
 
+        f, ax = plt.subplots(1,1)
         _, _, _   = plt.hist(fc.hp.var,
                              bins = fc.hp.nbins,
                              range=fc.hp.range,
@@ -255,6 +258,8 @@ def plot_fit_energy(fc : FitCollection):
                              label=stat)
 
         plt.plot(fc.fp.x, fc.fp.f(fc.fp.x), "r-", lw=4)
+        anchored_text = AnchoredText(stat, loc=2)
+        ax.add_artist(anchored_text)
     else:
         warnings.warn(f' fit did not succeed, cannot plot ', UserWarning)
 
@@ -288,4 +293,6 @@ def get_fit_params(fc: FitCollection):
     fwhm_err = err[2]
     eres_err = (2.35/mean)*np.sqrt(fwhm_err**2. + (fwhm**2. / mean**2.)*mean_err**2.)
 
-    return eres, fwhm, mean, eres_err, fwhm_err, mean_err
+    chi2 = fc.fr.chi2
+
+    return eres, fwhm, mean, eres_err, fwhm_err, mean_err, chi2
