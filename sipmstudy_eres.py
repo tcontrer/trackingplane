@@ -15,7 +15,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import norm
 from fit_functions import fit_energy, plot_fit_energy, print_fit_energy, get_fit_params
-from open_files import make_mc_dictionaries
+from open_new_files import make_mc_dictionaries
 
 from ic_functions import *
 from invisible_cities.core.core_functions  import shift_to_bin_centers
@@ -47,7 +47,7 @@ local = False
 event_type = 'qbb'
 teflon = False
 
-r_cut = 300.
+r_cut = 400.
 tp_area = np.pi * (984./2.)**2 # mm^2
 dark_rate = {1:80./1000., 3: 450./1000., 6: 1800./1000.} # SiPM size: average dark rate per sipm (counts/microsecond)
 if event_type == 'kr':
@@ -56,7 +56,8 @@ else:
     event_time = 100. # microseconds
 
 mcs_to_use = ['s13p13', 's13p7', 's13p15', 's3p7', 's3p15', 's6p6', 's6p15']
-mcs, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon, new=True)
+mcs, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon)
+print('outdir:',outdir)
 
 for mc in mcs:
     sipms = pd.DataFrame()
@@ -388,3 +389,4 @@ plt.legend()
 plt.grid()
 plt.savefig(outdir+'eres_coverage'+'pmt_mean.png')
 plt.close()
+

@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import norm
-from open_files import make_mc_dictionaries
+from open_new_files import make_mc_dictionaries
 
 from ic_functions import *
 
@@ -21,13 +21,15 @@ print("Starting")
 nfiles = 100 # will fail if too few events
 local = False
 event_type = 'kr'
+old_tag = '20210701_tcontreras'
+new_tag = '20211207_tcontreras'
 tp_area = np.pi * (984./2.)**2 # mm^2      
 
-mcs_to_use = ['s13p13', 's13p7', 's13p15', 's3p3', 's3p7', 's3p15', 's6p6', 's6p15']
-mcs_teflon, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon=True)
-print([mc['teflon'] for mc in mcs_teflon])
-mcs_noteflon, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon=False)
-print([mc['teflon'] for mc in mcs_teflon])
+mcs_to_use = ['s13p7', 's13p15', 's3p7', 's3p15', 's6p15']
+mcs_teflon, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon=True, tag=new_tag)
+#print([mc['teflon'] for mc in mcs_teflon])
+mcs_noteflon, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon=False, tag=new_tag)
+#print([mc['teflon'] for mc in mcs_teflon])
 
 def fill_mcs(mcs):
     for mc in mcs:
@@ -49,7 +51,7 @@ def fill_mcs(mcs):
             charges = sipm_response_byevent.agg({"charge":"sum"})
             sipms = sipms.append(charges)
 
-            pmt_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] < 60]
+            pmt_response = sns_response_sorted.loc[sns_response_sorted["sensor_id"] < 999]
             pmt_response_byevent = pmt_response.groupby('event_id')
             pmt_charges = pmt_response_byevent.agg({"charge":"sum"})
             pmts = pmts.append(pmt_charges)
