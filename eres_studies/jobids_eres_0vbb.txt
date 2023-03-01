@@ -1,0 +1,37 @@
+Job IDs for Distributions of 0vbb Simulations:
+s1.3mmp3.5mm
+Submitted batch job 41754778
+Submitted batch job 41754779
+Submitted batch job 41754780
+Submitted batch job 41754781
+Submitted batch job 41754782
+Submitted batch job 41754783
+Submitted batch job 41754784
+Submitted batch job 41754785
+Submitted batch job 41754786
+Submitted batch job 41754787
+Submitted batch job 41754788
+s1.3mmp2.4mm
+Submitted batch job 41754789
+Submitted batch job 41754790
+Submitted batch job 41754791
+Submitted batch job 41754792
+Submitted batch job 41754793
+Submitted batch job 41754794
+Submitted batch job 41754795
+Submitted batch job 41754796
+Submitted batch job 41754797
+Submitted batch job 41754798
+Submitted batch job 41754799
+s3mmp5.5mm
+Submitted batch job 41754800
+Submitted batch job 41754801
+Submitted batch job 41754802
+Submitted batch job 41754803
+Submitted batch job 41754804
+Submitted batch job 41754805
+Submitted batch job 41754806
+Submitted batch job 41754807
+Submitted batch job 41754808
+Submitted batch job 41754809
+Submitted batch job 41754810

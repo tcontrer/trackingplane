@@ -18,14 +18,15 @@ from open_new_files import make_mc_dictionaries
 from ic_functions import *
 
 print("Starting")
-nfiles = 5 # will fail if too few events
+nfiles = 1000 # will fail if too few events
 local = False
-event_type = 'kr'
+event_type = 'qbb'
 teflon = False
 
-mcs_to_use = ['s13p13', 's13p7', 's13p15', 's3p3', 's3p7', 's3p15', 's6p6', 's6p15']
+mcs_to_use = ['s13p7', 's13p15', 's3p3', 's3p7', 's3p15', 's6p6', 's6p15']
 mcs, outdir, indir = make_mc_dictionaries(mcs_to_use, local, nfiles, event_type, teflon)
 #indir = '/n/holystore01/LABS/guenette_lab/Users/tcontreras/nexus-production/output/efficiency_sims/s1.3mmp7mm/'
+#outdir = outdir+'/test_s13p13/'
 #mcs[0]["files"] = [indir+"/flex.single_e."+str(i)+".nexus.h5"
 #                        for i in range(1,nfiles+1)]
 

@@ -1,0 +1,27 @@
+Job IDs for Distributions of kr83m Simulations:
+s1.3mmp15mm
+Submitted batch job 25874791
+s1.3mmp7mm
+Submitted batch job 25874792
+s1.3mmp1.3mm
+Submitted batch job 25874793
+s3mmp15mm
+Submitted batch job 25874795
+s3mmp7mm
+Submitted batch job 25874796
+s3mmp3mm
+Submitted batch job 25874798
+s6mmp15mm
+Submitted batch job 25874799
+s6mmp6mm
+Submitted batch job 25874801
+s1.3mmp15mm_teflon
+Submitted batch job 25874802
+s1.3mmp7mm_teflon
+Submitted batch job 25874803
+s3mmp15mm_teflon
+Submitted batch job 25874805
+s3mmp7mm_teflon
+Submitted batch job 25874806
+s6mmp15mm_teflon
+Submitted batch job 25874807
